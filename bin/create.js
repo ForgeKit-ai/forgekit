@@ -8,9 +8,6 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { fileURLToPath } from 'url'; // Import for path calculation
 
-// --- Configuration ---
-const DEFAULT_OBSIDIAN_VAULT_PATH = "C:\\Users\\zacha\\Documents\\Primary"; // Or get from ENV: process.env.OBSIDIAN_VAULT_PATH
-
 // --- Helper Functions ---
 
 function checkCommand(result, errorMessage) {
@@ -35,7 +32,7 @@ function checkCommand(result, errorMessage) {
 
 function drawForgeHammer() {
   console.log(`\n      _______`);
-  console.log(`     // ___ \\\\      🔥 Forging your project with DevForge 🔨`);
+  console.log(`     // ___ \\\\      🔥 Forging your project with ForgeKit 🔨`);
   console.log(`    | |___| |`);
   console.log(`    | |___| |     /----\\`);
   console.log(`    | |   | |    /      \\`);
@@ -98,7 +95,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
-- Initial project scaffolding created by DevForge.
+- Initial project scaffolding created by ForgeKit.
 `;
   fs.writeFileSync(path.join(projectRoot, "CHANGELOG.md"), changelogContent);
   console.log("↳ Created CHANGELOG.md");
@@ -126,7 +123,7 @@ function generateReadme(projectName, stack, uiFramework, storybook) {
 
     return `# ${projectName}
 
-Welcome to **${projectName}**! Forged with DevForge.
+Welcome to **${projectName}**! Forged with ForgeKit.
 
 ## Overview
 *Provide a brief description of your project.*
@@ -622,7 +619,7 @@ async function setupNextJS(projectRoot, options) {
   let result = shell.exec(createCommand, { cwd: parentDir });
   checkCommand(result, `Failed to create Next.js project '${options.projectName}'.`);
 
-  console.log("\n📝 Adding DevForge structure files...");
+  console.log("\n📝 Adding ForgeKit structure files...");
   createProjectStructure(projectRoot, options.projectName, options.stack, options.uiFramework, options.storybook, options.obsidianVaultPath);
 
   await setupSupabase(projectRoot, "NEXT_PUBLIC");
