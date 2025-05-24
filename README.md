@@ -14,8 +14,13 @@ Install the package globally and run the CLI:
 
 ```bash
 npm install -g forgekit
-forge my-app
+forge
 ```
+
+Running `forge` will prompt you for a project name and desired stack. The
+project is created in the directory where you executed the command, and when
+scaffolding finishes you will be dropped into a shell inside the new project
+folder.
 
 The tool can also be configured programmatically. Example configuration from the project plan:
 
@@ -32,8 +37,10 @@ The tool can also be configured programmatically. Example configuration from the
 You can also use `npx` without installing globally:
 
 ```bash
-npx forge my-app
+npx forge
 ```
+This behaves the same as the global install, prompting for details and placing
+you in the newly created project directory when finished.
 
 ## Purpose
 

@@ -4,7 +4,6 @@ import fs from 'fs';
 import path from 'path';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { fileURLToPath } from 'url';
 import { drawForgeHammer, setupGit, createProjectStructure, sanitizeProjectName } from '../src/utils.js';
 import { spawn } from 'child_process';
 import { scaffoldProject } from '../src/scaffold.js';
@@ -12,15 +11,8 @@ import { stacks } from '../src/registries/stackRegistry.js';
 
 
 (async () => {
-  let projectsBaseDir;
-  try {
-      const __filename = fileURLToPath(import.meta.url);
-      const createScriptDir = path.dirname(__filename);
-      projectsBaseDir = path.dirname(createScriptDir);
-  } catch (e) {
-      console.error('❌ Error determining script location.');
-      process.exit(1);
-  }
+  // Use the directory where the user ran the command
+  const projectsBaseDir = process.cwd();
 
   const stackKeys = Object.keys(stacks);
   const argv = yargs(hideBin(process.argv))
