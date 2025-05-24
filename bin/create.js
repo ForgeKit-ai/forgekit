@@ -8,6 +8,7 @@ import { drawForgeHammer, setupGit, createProjectStructure, sanitizeProjectName 
 import { spawn } from 'child_process';
 import { scaffoldProject } from '../src/scaffold.js';
 import { stacks } from '../src/registries/stackRegistry.js';
+import { runDoctor } from '../src/doctor.js';
 
 
 (async () => {
@@ -23,10 +24,16 @@ import { stacks } from '../src/registries/stackRegistry.js';
     .option('uiFramework', { type: 'string', description: 'UI framework', choices: ['Tailwind', 'Chakra', 'None'], default: 'None' })
     .option('storybook', { type: 'boolean', description: 'Include Storybook setup', default: false })
     .option('nonInteractive', { type: 'boolean', description: 'Run in non-interactive mode', default: false })
+    .option('doctor', { type: 'boolean', description: 'Check ForgeKit installation status' })
     .help()
     .alias('h', 'help')
     .wrap(null)
     .argv;
+
+  if (argv.doctor) {
+    runDoctor();
+    process.exit(0);
+  }
 
   let options = {};
 

@@ -42,6 +42,20 @@ npx @forgekit/cli
 This behaves the same as the global install, prompting for details and placing
 you in the newly created project directory when finished.
 
+If the `forge` command is not found after a global install, ensure your npm
+global bin directory is in your `PATH`.
+You can typically add it with:
+
+```bash
+export PATH="$PATH:$(npm bin -g)"
+```
+
+You can verify your environment at any time with the built in doctor command:
+
+```bash
+forge --doctor
+```
+
 ## Purpose
 
 ForgeKit aims to streamline bootstrapping modern JavaScript projects by providing a collection of ready‑to‑use stacks with minimal setup hassle.

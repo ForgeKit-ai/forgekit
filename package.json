@@ -23,7 +23,8 @@
   },
   "scripts": {
     "test": "node test/stack-implementation.test.js",
-    "generate-stack-docs": "node scripts/generate-stack-docs.js"
+    "generate-stack-docs": "node scripts/generate-stack-docs.js",
+    "postinstall": "node scripts/postinstall.js"
   },
   "dependencies": {
     "inquirer": "^12.5.0",
