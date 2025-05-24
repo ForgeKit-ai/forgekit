@@ -23,5 +23,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/forgekit/forgekit.git"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
