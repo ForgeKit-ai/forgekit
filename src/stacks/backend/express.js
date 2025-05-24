@@ -66,7 +66,7 @@ app.get('/api/message', (req: Request, res: Response) => {
 });
 
 app.listen(port, () => {
-  console.log(\`🚀 Backend server listening on http://localhost:${port}\`);
+  console.log(\`🚀 Backend server listening on http://localhost:\${port}\`);
 });`;
   fs.writeFileSync(path.join(backendSrcDir, 'index.ts'), indexTsContent);
   console.log(`↳ Created src/index.ts in backend`);
