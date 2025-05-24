@@ -1,4 +1,4 @@
-``import path from 'path';
+import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
 import { setupRootConcurrentDev } from '../../utils.js';
