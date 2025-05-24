@@ -10,10 +10,11 @@ ForgeKit is a modular scaffolding tool that helps you spin up full‑stack proje
 
 ## Example Usage
 
-Run the script directly to create a project:
+Install the package globally and run the CLI:
 
 ```bash
-node create.mjs
+npm install -g forgekit
+forge my-app
 ```
 
 The tool can also be configured programmatically. Example configuration from the project plan:
@@ -28,10 +29,10 @@ The tool can also be configured programmatically. Example configuration from the
 }
 ```
 
-Future releases will support an npm‑published CLI so you can simply run:
+You can also use `npx` without installing globally:
 
 ```bash
-npx create-forgekit my-app
+npx forge my-app
 ```
 
 ## Purpose
