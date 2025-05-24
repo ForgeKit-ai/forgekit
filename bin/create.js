@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import { drawForgeHammer, setupGit, createProjectStructure, DEFAULT_OBSIDIAN_VAULT_PATH } from '../src/utils.js';
 import { scaffoldProject } from '../src/scaffold.js';
 
+
 (async () => {
   let projectsBaseDir;
   try {
