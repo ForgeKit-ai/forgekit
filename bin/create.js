@@ -5,7 +5,8 @@ import path from 'path';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { fileURLToPath } from 'url';
-import { drawForgeHammer, setupGit, createProjectStructure, DEFAULT_OBSIDIAN_VAULT_PATH, sanitizeProjectName } from '../src/utils.js';
+import { drawForgeHammer, setupGit, createProjectStructure, sanitizeProjectName } from '../src/utils.js';
+import { spawn } from 'child_process';
 import { scaffoldProject } from '../src/scaffold.js';
 
 
@@ -27,7 +28,6 @@ import { scaffoldProject } from '../src/scaffold.js';
     .option('useNodemon', { type: 'boolean', description: 'Use nodemon for backend (React+Express)', default: true })
     .option('uiFramework', { type: 'string', description: 'UI framework', choices: ['Tailwind', 'Chakra', 'None'], default: 'None' })
     .option('storybook', { type: 'boolean', description: 'Include Storybook setup', default: false })
-    .option('obsidianVaultPath', { type: 'string', description: 'Path to Obsidian Vault', default: DEFAULT_OBSIDIAN_VAULT_PATH })
     .option('nonInteractive', { type: 'boolean', description: 'Run in non-interactive mode', default: false })
     .help()
     .alias('h', 'help')
@@ -56,7 +56,6 @@ import { scaffoldProject } from '../src/scaffold.js';
     }
     console.log(`  UI Framework: ${options.uiFramework}`);
     console.log(`  Storybook: ${options.storybook}`);
-    console.log(`  Obsidian Vault Path: ${options.obsidianVaultPath}`);
 
   } else {
     const answers = await inquirer.prompt([
@@ -66,14 +65,10 @@ import { scaffoldProject } from '../src/scaffold.js';
       { type: 'confirm', name: 'useNodemon', message: 'Use Nodemon for backend auto-restart?', default: true, when: (ans) => ans.stack === 'React + Express + Supabase' },
       { type: 'list', name: 'uiFramework', message: 'Choose a UI framework:', choices: ['Tailwind', 'Chakra', 'None'], default: 'None' },
       { type: 'confirm', name: 'storybook', message: 'Include Storybook setup?', default: false },
-      { type: 'input', name: 'obsidianVaultPath', message: `Obsidian vault path (default: ${DEFAULT_OBSIDIAN_VAULT_PATH}):`, default: DEFAULT_OBSIDIAN_VAULT_PATH },
     ]);
     options = { ...answers };
     if (options.stack !== 'React + Express + Supabase') {
         options.useNodemon = false;
-    }
-    if (options.obsidianVaultPath === '') {
-        options.obsidianVaultPath = DEFAULT_OBSIDIAN_VAULT_PATH;
     }
   }
 
@@ -104,7 +99,7 @@ import { scaffoldProject } from '../src/scaffold.js';
   }
 
   if (options.stack !== 'Next.js + Supabase') {
-      createProjectStructure(projectRoot, options.projectName, options.stack, options.uiFramework, options.storybook, options.obsidianVaultPath);
+      createProjectStructure(projectRoot, options.projectName, options.stack, options.uiFramework, options.storybook);
   }
 
   if (options.gitInit) {
@@ -123,7 +118,6 @@ import { scaffoldProject } from '../src/scaffold.js';
     ui: options.uiFramework,
     storybook: options.storybook,
     useNodemon: options.useNodemon,
-    obsidianVaultPath: options.obsidianVaultPath,
     stackLabel: options.stack
   };
 
@@ -133,21 +127,14 @@ import { scaffoldProject } from '../src/scaffold.js';
     console.log('\n===================================================');
     console.log(`✅ Project '${options.projectName}' has been forged successfully!`);
     console.log(`📂 Located at: ${projectRoot}`);
-    const obsidianVault = options.obsidianVaultPath || DEFAULT_OBSIDIAN_VAULT_PATH;
-    if (obsidianVault) {
-        const obsidianProjectFolder = path.join(obsidianVault, options.projectName);
-        if (fs.existsSync(obsidianProjectFolder)) {
-            console.log(`📓 Obsidian folder created at: ${obsidianProjectFolder}`);
-        } else {
-             console.log(`(Obsidian folder link: ${obsidianProjectFolder} - check warnings if creation failed)`);
-        }
-    }
     console.log('\nNext Steps:');
-    const relativeProjectPath = path.relative(process.cwd(), projectRoot) || options.projectName;
-    console.log(`  1. cd "${relativeProjectPath}"`);
-    console.log('  2. Review & fill in your Supabase credentials in the .env files (see README.md).');
-    console.log('  3. Run "npm run dev" in the project root to start both frontend and backend!');
+    console.log('  Review & fill in your Supabase credentials in the .env files (see README.md).');
+    console.log('  Run "npm run dev" in the project root to start both frontend and backend!');
     console.log('\nHappy coding! 🎉');
+
+    console.log(`\nOpening shell in ${projectRoot} ...`);
+    const shellProcess = spawn(process.env.SHELL || process.env.COMSPEC || 'sh', { stdio: 'inherit', cwd: projectRoot, shell: true });
+    shellProcess.on('exit', code => process.exit(code));
 
   } catch (error) {
       console.error('\n❌ An unexpected error occurred during setup:');
