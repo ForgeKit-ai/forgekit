@@ -1,6 +1,7 @@
 {
   "name": "projects",
   "version": "1.0.0",
+
   "description": "Modular full-stack project scaffolding tool",
   "main": "create.js",
   "scripts": {

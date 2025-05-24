@@ -1,4 +1,5 @@
-// create.mjs
+#!/usr/bin/env node
+// create.js
 import inquirer from "inquirer";
 import shell from "shelljs";
 import fs from "fs";
