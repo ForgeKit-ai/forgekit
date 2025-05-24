@@ -34,7 +34,7 @@ export function sanitizeProjectName(name) {
 
 export function drawForgeHammer() {
   console.log(`\n      _______`);
-  console.log(`     // ___ \\      🔥 Forging your project with DevForge 🔨`);
+  console.log(`     // ___ \\      🔥 Forging your project with ForgeKit 🔨`);
   console.log(`    | |___| |`);
   console.log(`    | |___| |     /----\\`);
   console.log(`    | |   | |    /      \\`);
@@ -71,7 +71,7 @@ export function createProjectStructure(projectRoot, projectName, stack, uiFramew
   fs.writeFileSync(path.join(projectRoot, "README.md"), readmeContent);
   console.log("↳ Created README.md");
 
-  const changelogContent = `# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/).\n\n## [Unreleased]\n- Initial project scaffolding created by DevForge.`;
+  const changelogContent = `# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/).\n\n## [Unreleased]\n- Initial project scaffolding created by ForgeKit.`;
   fs.writeFileSync(path.join(projectRoot, "CHANGELOG.md"), changelogContent);
   console.log("↳ Created CHANGELOG.md");
 
@@ -95,7 +95,7 @@ export function generateReadme(projectName, stack, uiFramework, storybook) {
         envFiles = `- \`.env.local\` (copy from \`.env.example\`)`;
     }
 
-    return `# ${projectName}\n\nWelcome to **${projectName}**! Forged with DevForge.\n\n## Overview\n*Provide a brief description of your project.*\n\n## Stack\n- **Framework/API:** ${stack}\n- **UI Framework:** ${uiFramework}\n- **Storybook:** ${storybook ? "Included" : "Not included"}\n- **Database:** Supabase (Setup required)\n\n## Getting Started\n\n1.  **Install Dependencies:**\n    \`\`\`bash\n    ${gettingStartedInstall}\n    \`\`\`\n\n2.  **Environment Setup:**\n    - Locate the \`.env.example\` file(s) mentioned below.\n    - Copy it to a new file (e.g., \`.env.local\` for Next.js, \`.env\` for Vite/Express).\n    - Fill in your Supabase Project URL and Anon Key.\n    - Find these in your Supabase project settings (API section).\n    - **Required Files:**\n      ${envFiles}\n\n3.  **Run Development Servers:**\n    \`\`\`bash\n    ${gettingStartedDev}\n    \`\`\`\n    - The application should now be running (check terminal output for exact URLs).\n\n## Folder Structure\n${structure}\n${backendSection ? backendSection : ''}\n- \`docs/\` – Documentation files\n- \`README.md\` – This file\n- \`CHANGELOG.md\` – Project changes history\n- \`.gitignore\` – Files ignored by Git\n\n## Supabase Setup Reminder\n- Create a project on [Supabase](https://supabase.com/).\n- Get your Project URL and Anon Key from the API settings.\n- Update your environment file(s) as described in "Getting Started".\n- Define your database schema using the Supabase table editor or SQL.`;
+    return `# ${projectName}\n\nWelcome to **${projectName}**! Forged with ForgeKit.\n\n## Overview\n*Provide a brief description of your project.*\n\n## Stack\n- **Framework/API:** ${stack}\n- **UI Framework:** ${uiFramework}\n- **Storybook:** ${storybook ? "Included" : "Not included"}\n- **Database:** Supabase (Setup required)\n\n## Getting Started\n\n1.  **Install Dependencies:**\n    \`\`\`bash\n    ${gettingStartedInstall}\n    \`\`\`\n\n2.  **Environment Setup:**\n    - Locate the \`.env.example\` file(s) mentioned below.\n    - Copy it to a new file (e.g., \`.env.local\` for Next.js, \`.env\` for Vite/Express).\n    - Fill in your Supabase Project URL and Anon Key.\n    - Find these in your Supabase project settings (API section).\n    - **Required Files:**\n      ${envFiles}\n\n3.  **Run Development Servers:**\n    \`\`\`bash\n    ${gettingStartedDev}\n    \`\`\`\n    - The application should now be running (check terminal output for exact URLs).\n\n## Folder Structure\n${structure}\n${backendSection ? backendSection : ''}\n- \`docs/\` – Documentation files\n- \`README.md\` – This file\n- \`CHANGELOG.md\` – Project changes history\n- \`.gitignore\` – Files ignored by Git\n\n## Supabase Setup Reminder\n- Create a project on [Supabase](https://supabase.com/).\n- Get your Project URL and Anon Key from the API settings.\n- Update your environment file(s) as described in "Getting Started".\n- Define your database schema using the Supabase table editor or SQL.`;
 }
 
 export function generateGitignore(stack) {

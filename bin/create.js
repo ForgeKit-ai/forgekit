@@ -70,7 +70,7 @@ import { stacks } from '../src/registries/stackRegistry.js';
       { type: 'input', name: 'projectName', message: 'Project name:', validate: input => !!input || 'Project name cannot be empty.' },
       { type: 'list', name: 'stack', message: 'Choose your tech stack:', choices: stackChoicesInteractive },
       { type: 'confirm', name: 'gitInit', message: 'Initialize a Git repository?', default: true },
-      { type: 'confirm', name: 'useNodemon', message: 'Use Nodemon for backend auto-restart?', default: true, when: (ans) => stacks[ans.stack].backend === 'express' },
+      { type: 'confirm', name: 'useNodemon', message: 'Enable Nodemon for automatic backend restarts during development. Recommended for a smoother and faster dev workflow.', default: true, when: (ans) => stacks[ans.stack].backend === 'express' },
       { type: 'list', name: 'uiFramework', message: 'Choose a UI framework:', choices: ['Tailwind', 'Chakra', 'None'], default: 'None' },
       { type: 'confirm', name: 'storybook', message: 'Include Storybook setup?', default: false },
     ]);
