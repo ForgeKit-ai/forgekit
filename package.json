@@ -1,19 +1,22 @@
 {
   "name": "projects",
   "version": "1.0.0",
-  "description": "",
+
+  "description": "Modular full-stack project scaffolding tool",
+  "main": "create.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "bin": {
-    "forgekit": "./bin/create.js"
-  },
+  "author": "ForgeKit Contributors",
+  "license": "MIT",
+  "type": "commonjs",
   "dependencies": {
     "inquirer": "^12.5.0",
     "shelljs": "^0.9.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/forgekit/forgekit.git"
   }
 }
