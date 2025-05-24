@@ -9,7 +9,6 @@ export async function setupReactVite(config) {
 
   console.log("\n▶️ Creating frontend with Vite (React + TS)...");
   let result = shell.exec(`npm create vite@latest frontend -- --template react-ts`, { cwd: targetDir, silent: true });
-  setupSupabase && null;
   if (!result || result.code !== 0) throw new Error(`Failed to create Vite project in ${frontendDir}`);
 
   try { fs.rmSync(path.join(frontendDir, '.gitignore'), { force: true }); } catch {}
