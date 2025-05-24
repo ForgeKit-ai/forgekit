@@ -5,7 +5,7 @@ import path from 'path';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { fileURLToPath } from 'url';
-import { drawForgeHammer, setupGit, createProjectStructure, DEFAULT_OBSIDIAN_VAULT_PATH } from '../src/utils.js';
+import { drawForgeHammer, setupGit, createProjectStructure, DEFAULT_OBSIDIAN_VAULT_PATH, sanitizeProjectName } from '../src/utils.js';
 import { scaffoldProject } from '../src/scaffold.js';
 
 
@@ -76,6 +76,12 @@ import { scaffoldProject } from '../src/scaffold.js';
         options.obsidianVaultPath = DEFAULT_OBSIDIAN_VAULT_PATH;
     }
   }
+
+  const sanitizedName = sanitizeProjectName(options.projectName);
+  if (sanitizedName !== options.projectName) {
+    console.log(`⚠️ Project name sanitized to '${sanitizedName}' for folder creation.`);
+  }
+  options.projectName = sanitizedName;
 
   drawForgeHammer();
   console.log(`🔥 Starting project setup for: ${options.projectName}`);

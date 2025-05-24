@@ -25,6 +25,15 @@ function checkCommand(result, errorMessage) {
 
 export { checkCommand };
 
+export function sanitizeProjectName(name) {
+  return name
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
+    .replace(/^\.+/, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .toLowerCase();
+}
+
 export function drawForgeHammer() {
   console.log(`\n      _______`);
   console.log(`     // ___ \\      🔥 Forging your project with DevForge 🔨`);
