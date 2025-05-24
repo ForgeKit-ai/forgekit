@@ -4,7 +4,7 @@ import shell from 'shelljs';
 import { createProjectStructure, setupSupabase, setupUIFramework, setupStorybook } from '../../utils.js';
 
 export async function setupNextJS(config) {
-  const { targetDir, projectName, ui, storybook, stackLabel, obsidianVaultPath } = config;
+  const { targetDir, projectName, ui, storybook, stackLabel } = config;
 
   console.log("\n🚀 Setting up Next.js + Supabase...");
   console.log("\n▶️ Creating project with create-next-app...");
@@ -23,7 +23,7 @@ export async function setupNextJS(config) {
   if (result.code !== 0) throw new Error(`Failed to create Next.js project '${projectName}'.`);
 
   console.log("\n📝 Adding DevForge structure files...");
-  createProjectStructure(targetDir, projectName, stackLabel, ui, storybook, obsidianVaultPath);
+  createProjectStructure(targetDir, projectName, stackLabel, ui, storybook);
 
   await setupSupabase(targetDir, 'NEXT_PUBLIC');
   if (ui !== 'Tailwind') {

@@ -2,8 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
 
-export const DEFAULT_OBSIDIAN_VAULT_PATH = process.env.OBSIDIAN_VAULT_PATH || "C:\\Users\\zacha\\Documents\\Primary";
-
 // --- Helper Functions ---
 
 function checkCommand(result, errorMessage) {
@@ -63,24 +61,9 @@ export async function setupGit(projectRoot) {
   checkCommand(result, `Failed to initialize git repository in ${projectRoot}. Is git installed and in your PATH?`);
 }
 
-export function createProjectStructure(projectRoot, projectName, stack, uiFramework, storybook, obsidianVaultPath) {
+export function createProjectStructure(projectRoot, projectName, stack, uiFramework, storybook) {
   console.log(`\n🏗️ Creating project structure for '${projectName}' at ${projectRoot}...`);
   fs.mkdirSync(projectRoot, { recursive: true });
-
-  const vaultPath = obsidianVaultPath || DEFAULT_OBSIDIAN_VAULT_PATH;
-  if (projectName && vaultPath) {
-      const obsidianProjectFolder = path.join(vaultPath, projectName);
-      try {
-          fs.mkdirSync(obsidianProjectFolder, { recursive: true });
-          console.log(`↳ Created Obsidian folder: ${obsidianProjectFolder}`);
-      } catch (err) {
-          console.warn(`⚠️ Warning: Could not create Obsidian folder at ${obsidianProjectFolder}.`);
-          console.warn(`   Reason: ${err.message}`);
-      }
-  } else {
-      if (!vaultPath) console.warn(`⚠️ Warning: Obsidian vault path not configured. Skipping Obsidian folder creation.`);
-      if (!projectName) console.warn(`⚠️ Warning: Project name is invalid. Skipping Obsidian folder creation.`);
-  }
 
   const docsDir = path.join(projectRoot, "docs");
   fs.mkdirSync(docsDir, { recursive: true });
