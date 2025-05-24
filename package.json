@@ -1,5 +1,5 @@
 {
-  "name": "forgekit",
+  "name": "@forgekit/cli",
   "version": "1.0.0",
   "description": "Modular full-stack project scaffolding tool",
   "keywords": [],

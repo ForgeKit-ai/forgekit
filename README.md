@@ -13,7 +13,7 @@ ForgeKit is a modular scaffolding tool that helps you spin up full‑stack proje
 Install the package globally and run the CLI:
 
 ```bash
-npm install -g forgekit
+npm install -g @forgekit/cli
 forge
 ```
 
@@ -37,7 +37,7 @@ The tool can also be configured programmatically. Example configuration from the
 You can also use `npx` without installing globally:
 
 ```bash
-npx forge
+npx @forgekit/cli
 ```
 This behaves the same as the global install, prompting for details and placing
 you in the newly created project directory when finished.
