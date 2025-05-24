@@ -8,7 +8,8 @@
     "forge": "./bin/create.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate-stack-docs": "node scripts/generate-stack-docs.js"
   },
   "keywords": [],
   "author": "ForgeKit Contributors",
