@@ -1,0 +1,6 @@
+test/
+scripts/
+
+# Exclude local development files
+node_modules/
+

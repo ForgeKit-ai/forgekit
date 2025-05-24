@@ -1,25 +1,36 @@
 {
   "name": "forgekit",
   "version": "1.0.0",
-
   "description": "Modular full-stack project scaffolding tool",
+  "keywords": [],
+  "homepage": "https://github.com/forgekit/forgekit#readme",
+  "bugs": {
+    "url": "https://github.com/forgekit/forgekit/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forgekit/forgekit.git"
+  },
+  "license": "MIT",
+  "author": "ForgeKit Contributors",
+  "type": "module",
   "main": "src/scaffold.js",
   "bin": {
-    "forge": "./bin/create.js"
+    "forge": "bin/create.js"
+  },
+  "directories": {
+    "test": "test"
   },
   "scripts": {
     "test": "node test/stack-implementation.test.js",
     "generate-stack-docs": "node scripts/generate-stack-docs.js"
   },
-  "keywords": [],
-  "author": "ForgeKit Contributors",
-  "license": "MIT",
-  "type": "module",
   "dependencies": {
     "inquirer": "^12.5.0",
     "shelljs": "^0.9.2",
     "yargs": "^17.7.2"
   },
+
   "repository": {
     "type": "git",
     "url": "https://github.com/forgekit/forgekit.git"
@@ -27,4 +38,5 @@
   "engines": {
     "node": ">=18"
   }
+
 }
