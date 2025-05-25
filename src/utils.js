@@ -81,7 +81,17 @@ export function createProjectStructure(projectRoot, projectName, stack, uiFramew
 }
 
 export function generateReadme(projectName, stack, uiFramework, database) {
-  return `# ${projectName}\n\n## Stack\n- **Frontend:** ${stack.frontend}\n${stack.backend ? `- **Backend:** ${stack.backend}\n` : ''}- **UI Library:** ${uiFramework}\n- **Database:** ${database || 'None'}\n`;
+  let readme = `# ${projectName}\n\n## Stack\n- **Frontend:** ${stack.frontend}\n${stack.backend ? `- **Backend:** ${stack.backend}\n` : ''}- **UI Library:** ${uiFramework}\n- **Database:** ${database || 'None'}\n`;
+
+  readme += `\n## Development\n`;
+  if (stack.backend) {
+    readme += `- Run \`npm run dev\` from the project root to start frontend and backend.\n`;
+    readme += `- Or run \`npm run dev\` in the \`frontend\` and \`backend\` directories individually.\n`;
+  } else {
+    readme += `Run \`npm run dev\` in the \`frontend\` directory to start the development server.\n`;
+  }
+
+  return readme;
 }
 
 export function generateGitignore(stack = {}) {
