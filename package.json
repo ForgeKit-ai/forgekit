@@ -1,6 +1,6 @@
 {
   "name": "@forgekit/cli",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Modular full-stack project scaffolding tool",
   "keywords": [],
   "homepage": "https://github.com/ForgeKit-ai/forgekit#readme",
@@ -23,8 +23,7 @@
   },
   "scripts": {
     "test": "node test/stack-implementation.test.js",
-    "generate-stack-docs": "node scripts/generate-stack-docs.js",
-    "postinstall": "node scripts/postinstall.js"
+    "generate-stack-docs": "node scripts/generate-stack-docs.js"
   },
   "dependencies": {
     "inquirer": "^12.5.0",
