@@ -1,41 +1,32 @@
-# Supported Stacks
+# Supported Options
 
-- **React + Express + Supabase** (key: `react-express`)
-  - Frontend: react-vite
-  - Backend: express
-  - Database: supabase
+## Frontends
+- React (Vite) (`react-vite`)
+- Next.js (`nextjs`)
+- Vue (Vite) (`vue-vite`)
+- SvelteKit (`sveltekit`)
+- Astro (`astro`)
+- Blazor (`blazor`)
+- Godot (`godot`)
 
-- **Next.js + Supabase** (key: `nextjs`)
-  - Frontend: nextjs
-  - Backend: none
-  - Database: supabase
+## Backends
+- Express (Node.js) (`express`)
+- FastAPI (Python) (`fastapi`)
+- Flask (Python) (`flask`)
+- Django (Python) (`django`)
+- Ruby on Rails (`rails`)
+- Go Fiber (`gofiber`)
+- Spring Boot (Java) (`spring-boot`)
+- None (`null`)
 
-- **Vue + FastAPI + Supabase** (key: `vue-fastapi`)
-  - Frontend: vue-vite
-  - Backend: fastapi
-  - Database: supabase
+## UI Libraries
+- Tailwind CSS
+- Chakra UI
+- None
 
-- **SvelteKit + Flask + Supabase** (key: `sveltekit-flask`)
-  - Frontend: sveltekit
-  - Backend: flask
-  - Database: supabase
-
-- **Astro + Django + PostgreSQL** (key: `astro-django`)
-  - Frontend: astro
-  - Backend: django
-  - Database: postgresql
-
-- **Blazor + Ruby on Rails + PostgreSQL** (key: `blazor-rails`)
-  - Frontend: blazor
-  - Backend: rails
-  - Database: postgresql
-
-- **Godot + Go Fiber + PostgreSQL** (key: `godot-go`)
-  - Frontend: godot
-  - Backend: gofiber
-  - Database: postgresql
-
-- **React + Spring Boot + PostgreSQL** (key: `react-spring`)
-  - Frontend: react-vite
-  - Backend: spring-boot
-  - Database: postgresql
+## Databases
+- Supabase
+- PostgreSQL
+- SQLite
+- MongoDB
+- MySQL

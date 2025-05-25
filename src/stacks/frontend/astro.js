@@ -1,10 +1,10 @@
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
-import { setupUIFramework, setupStorybook } from '../../utils.js';
+import { setupUIFramework } from '../../utils.js';
 
 export async function setupAstro(config) {
-  const { targetDir, projectName, ui, storybook } = config;
+  const { targetDir, projectName, ui } = config;
   const frontendDir = path.join(targetDir, 'frontend');
 
   console.log('\n▶️ Creating Astro frontend...');
@@ -21,7 +21,4 @@ export async function setupAstro(config) {
   }
 
   await setupUIFramework(frontendDir, ui, 'vite');
-  if (storybook) {
-    await setupStorybook(frontendDir);
-  }
 }

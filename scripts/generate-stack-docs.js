@@ -1,14 +1,21 @@
 import fs from 'fs';
 import path from 'path';
-import { stacks } from '../src/registries/stackRegistry.js';
-
-const lines = ['# Supported Stacks', ''];
-for (const [key, s] of Object.entries(stacks)) {
-  lines.push(`- **${s.label}** (key: \`${key}\`)`);
-  lines.push(`  - Frontend: ${s.frontend}`);
-  lines.push(`  - Backend: ${s.backend ? s.backend : 'none'}`);
-  lines.push(`  - Database: ${s.database || 'none'}`);
-  lines.push('');
+import { frontendOptions, backendOptions, uiOptions, databaseOptions } from '../src/registries/modularOptions.js';
+const lines = ['# Supported Options', '', '## Frontends'];
+for (const [key, val] of Object.entries(frontendOptions)) {
+  lines.push(`- ${val} (\`${key}\`)`);
+}
+lines.push('', '## Backends');
+for (const [key, val] of Object.entries(backendOptions)) {
+  lines.push(`- ${val} (\`${key}\`)`);
+}
+lines.push('', '## UI Libraries');
+for (const val of Object.values(uiOptions)) {
+  lines.push(`- ${val}`);
+}
+lines.push('', '## Databases');
+for (const val of Object.values(databaseOptions)) {
+  lines.push(`- ${val}`);
 }
 
 const outPath = path.join(process.cwd(), 'STACKS.md');

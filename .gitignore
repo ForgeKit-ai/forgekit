@@ -118,6 +118,3 @@ Desktop.ini
 # SvelteKit build output
 .svelte-kit/
 
-# Storybook build outputs
-.out/
-.storybook-out/
