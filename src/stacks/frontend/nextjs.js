@@ -9,7 +9,7 @@ export async function setupNextJS(config) {
 
   console.log("\n🚀 Setting up Next.js + Supabase...");
   console.log("\n▶️ Creating project with create-next-app...");
-  let cnaFlags = `--ts --eslint --app --src-dir --import-alias "@/*" --use-npm`;
+  let cnaFlags = `--ts --eslint --app --src-dir --import-alias "@/*" --use-npm --no-turbo`;
   if (ui === 'Tailwind') {
       cnaFlags += ' --tailwind';
   } else {

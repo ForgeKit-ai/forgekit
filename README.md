@@ -57,6 +57,14 @@ You can verify your environment at any time with the built in doctor command:
 forge --doctor
 ```
 
+## `forge deploy`
+
+Run this command to publish your project. It will:
+
+- Build the project.
+- Bundle the `dist/` directory into `bundle.tar.gz`.
+- Upload the archive to ForgeKit hosting.
+
 ## Purpose
 
 ForgeKit aims to streamline bootstrapping modern JavaScript projects by providing a collection of ready‑to‑use stacks with minimal setup hassle.
