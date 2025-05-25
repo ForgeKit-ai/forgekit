@@ -20,7 +20,7 @@ export async function setupNextJS(config) {
 
   const createCommand = `npx create-next-app@latest "${projectName}" ${cnaFlags}`;
   let result = shell.exec(createCommand, { cwd: parentDir });
-  if (result.code !== 0) throw new Error(`Failed to create Next.js project '${projectName}'.`);
+  if (result.code !== 0) throw new Error(`Failed to create Next.js project '${projectName}': ${result.stderr || result.stdout}`);
 
   console.log("\n📝 Adding DevForge structure files...");
   createProjectStructure(targetDir, projectName, stackLabel, ui, config.database);

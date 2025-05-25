@@ -9,14 +9,14 @@ export async function setupVueVite(config) {
 
   console.log('\n▶️ Creating frontend with Vite (Vue + TS)...');
   let result = shell.exec(`npm create vite@latest frontend -- --template vue-ts`, { cwd: targetDir, silent: true });
-  if (!result || result.code !== 0) throw new Error(`Failed to create Vite project in ${frontendDir}`);
+  if (!result || result.code !== 0) throw new Error(`Failed to create Vite project in ${frontendDir}: ${result.stderr || result.stdout}`);
 
   try { fs.rmSync(path.join(frontendDir, '.gitignore'), { force: true }); } catch {}
   try { fs.rmSync(path.join(frontendDir, 'README.md'), { force: true }); } catch {}
 
   console.log('  Installing frontend dependencies...');
   result = shell.exec('npm install', { cwd: frontendDir, silent: true });
-  if (result.code !== 0) throw new Error(`Failed to install frontend dependencies in ${frontendDir}`);
+  if (result.code !== 0) throw new Error(`Failed to install frontend dependencies in ${frontendDir}: ${result.stderr || result.stdout}`);
 
   const appVuePath = path.join(frontendDir, 'src', 'App.vue');
   const mainTsPath = path.join(frontendDir, 'src', 'main.ts');

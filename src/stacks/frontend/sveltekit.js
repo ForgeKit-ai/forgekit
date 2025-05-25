@@ -14,8 +14,9 @@ export async function setupSvelteKit(config) {
   );
   if (!result || result.code !== 0) throw new Error(`Failed to create SvelteKit project in ${frontendDir}`);
 
+
   result = shell.exec('npm install', { cwd: frontendDir, silent: true });
-  if (result.code !== 0) throw new Error(`Failed to install dependencies in ${frontendDir}`);
+  if (result.code !== 0) throw new Error(`Failed to install dependencies in ${frontendDir}: ${result.stderr || result.stdout}`);
 
   const pagePath = path.join(frontendDir, 'src', 'routes', '+page.svelte');
   if (fs.existsSync(pagePath)) {
