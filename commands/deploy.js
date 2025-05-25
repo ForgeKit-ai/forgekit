@@ -2,7 +2,9 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
-import tar from 'tar';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const tar = require('tar');
 import axios from 'axios';
 import FormData from 'form-data';
 
