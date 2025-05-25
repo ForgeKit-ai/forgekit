@@ -48,7 +48,7 @@ global bin directory is in your `PATH`.
 You can typically add it with:
 
 ```bash
-export PATH="$PATH:$(npm bin -g)"
+$env:Path += ";$(npm bin -g)"
 ```
 
 You can verify your environment at any time with the built in doctor command:
