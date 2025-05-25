@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
+import { checkCommand } from '../../utils.js';
 
 export async function setupFastAPI(config) {
   const { targetDir } = config;
@@ -13,6 +14,9 @@ export async function setupFastAPI(config) {
   const mainPy = `from fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get('/')\nasync def root():\n    return {'message': 'Hello from FastAPI'}\n`;
   fs.writeFileSync(path.join(backendDir, 'main.py'), mainPy);
 
-  shell.exec('python3 -m venv venv', { cwd: backendDir, silent: true });
-  shell.exec('venv/bin/pip install -r requirements.txt', { cwd: backendDir, silent: true });
+  let result = shell.exec('python3 -m venv venv', { cwd: backendDir, silent: true });
+  checkCommand(result, 'Failed to create Python venv for FastAPI');
+
+  result = shell.exec('venv/bin/pip install -r requirements.txt', { cwd: backendDir, silent: true });
+  checkCommand(result, 'Failed to install FastAPI dependencies');
 }
