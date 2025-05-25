@@ -39,8 +39,8 @@ export const uiCompatibility = {
   'vue-vite': ['Tailwind'],
   'sveltekit': ['Tailwind'],
   'astro': ['Tailwind'],
-  'blazor': [],
-  'godot': []
+  'blazor': ['None'],
+  'godot': ['None']
 };
 
 export const backendCompatibility = {
