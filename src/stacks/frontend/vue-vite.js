@@ -48,6 +48,8 @@ export async function setupVueVite(config) {
     fs.writeFileSync(mainTsPath, mainContent);
   }
 
-  await setupSupabase(frontendDir, 'VITE');
+  if (config.database === 'supabase') {
+    await setupSupabase(frontendDir, 'VITE');
+  }
   await setupUIFramework(frontendDir, ui, 'vite');
 }
