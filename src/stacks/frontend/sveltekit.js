@@ -8,8 +8,12 @@ export async function setupSvelteKit(config) {
   const frontendDir = path.join(targetDir, 'frontend');
 
   console.log('\n▶️ Creating SvelteKit frontend...');
-  let result = shell.exec(`npm create svelte@latest frontend -- --template skeleton`, { cwd: targetDir, silent: true });
-  if (!result || result.code !== 0) throw new Error(`Failed to create SvelteKit project in ${frontendDir}: ${result.stderr || result.stdout}`);
+  let result = shell.exec(
+    `npm create svelte@latest frontend -- --template skeleton --yes --no-install`,
+    { cwd: targetDir }
+  );
+  if (!result || result.code !== 0) throw new Error(`Failed to create SvelteKit project in ${frontendDir}`);
+
 
   result = shell.exec('npm install', { cwd: frontendDir, silent: true });
   if (result.code !== 0) throw new Error(`Failed to install dependencies in ${frontendDir}: ${result.stderr || result.stdout}`);
