@@ -84,8 +84,16 @@ export function generateReadme(projectName, stack, uiFramework, database) {
   return `# ${projectName}\n\n## Stack\n- **Frontend:** ${stack.frontend}\n${stack.backend ? `- **Backend:** ${stack.backend}\n` : ''}- **UI Library:** ${uiFramework}\n- **Database:** ${database || 'None'}\n`;
 }
 
-export function generateGitignore() {
-  const gitignore = `# Dependencies\n/node_modules\n/.pnp\n.pnp.js\n\n# Build outputs\n/dist\n/build\n/out\n/.next\n\n# Environment variables (keep example files)\n.env\n.env.*\n!.env.example\n.env.local\n\n# Logs\nlogs\n*.log\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\npnpm-debug.log*\nlerna-debug.log*\n\n# OS generated files\n.DS_Store\n.DS_Store?\n._*\n.Spotlight-V100\n.Trashes\nehthumbs.db\nThumbs.db\n\n# Editor directories and files\n.vscode/*\n!.vscode/settings.json\n!.vscode/tasks.json\n!.vscode/launch.json\n!.vscode/extensions.json\n*.sublime-workspace\n.idea\n\n# Optional files\n/.cache`;
+export function generateGitignore(stack = {}) {
+  let gitignore = `# Dependencies\n/node_modules\n/.pnp\n.pnp.js\n\n# Build outputs\n/dist\n/build\n/out\n/.next\n\n# Environment variables (keep example files)\n.env\n.env.*\n!.env.example\n.env.local\n\n# Logs\nlogs\n*.log\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\npnpm-debug.log*\nlerna-debug.log*\n\n# OS generated files\n.DS_Store\n.DS_Store?\n._*\n.Spotlight-V100\n.Trashes\nehthumbs.db\nThumbs.db\n\n# Editor directories and files\n.vscode/*\n!.vscode/settings.json\n!.vscode/tasks.json\n!.vscode/launch.json\n!.vscode/extensions.json\n*.sublime-workspace\n.idea\n\n# Optional files\n/.cache`;
+
+  if (stack.frontend) {
+    gitignore += `\n# Frontend\n/frontend/node_modules`;
+  }
+
+  if (stack.backend) {
+    gitignore += `\n# Backend\n/backend/node_modules`;
+  }
 
   return gitignore.trim();
 }
