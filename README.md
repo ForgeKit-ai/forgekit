@@ -72,6 +72,7 @@ npm test
 
 To update the stack documentation after modifying the available options run:
 
+
 ```bash
 npm run generate-stack-docs
 ```
@@ -79,3 +80,4 @@ npm run generate-stack-docs
 This will regenerate `STACKS.md` based on the registry files.
 
 There is currently no formal CONTRIBUTING guide, but pull requests and issues are welcome.
+

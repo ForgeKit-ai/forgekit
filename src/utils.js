@@ -67,7 +67,7 @@ export function createProjectStructure(projectRoot, projectName, stack, uiFramew
 
   const docsDir = path.join(projectRoot, "docs");
   fs.mkdirSync(docsDir, { recursive: true });
-  const readmeContent = generateReadme(projectName, stack, uiFramework, database);
+  const readmeContent = generateReadme(projectRoot, projectName, stack, uiFramework, database);
   fs.writeFileSync(path.join(projectRoot, "README.md"), readmeContent);
   console.log("↳ Created README.md");
 
@@ -80,14 +80,29 @@ export function createProjectStructure(projectRoot, projectName, stack, uiFramew
   console.log("↳ Created .gitignore");
 }
 
-export function generateReadme(projectName, stack, uiFramework, database) {
+export function generateReadme(projectRoot, projectName, stack, uiFramework, database) {
   let readme = `# ${projectName}\n\n## Stack\n- **Frontend:** ${stack.frontend}\n${stack.backend ? `- **Backend:** ${stack.backend}\n` : ''}- **UI Library:** ${uiFramework}\n- **Database:** ${database || 'None'}\n`;
+
+  const instructions = [];
+  const frontendDir = path.join(projectRoot, 'frontend');
+  const backendDir = path.join(projectRoot, 'backend');
+
+  if (fs.existsSync(frontendDir)) {
+    instructions.push('```bash\ncd frontend && npm install && npm run dev\n```');
+  }
+  if (fs.existsSync(backendDir)) {
+    instructions.push('```bash\ncd backend && npm install && npm run dev\n```');
+  }
+
+  if (instructions.length > 0) {
+    readme += `\n## Getting Started\n${instructions.join('\n\n')}\n`;
+  }
 
   readme += `\n## Development\n`;
   if (stack.backend) {
     readme += `- Run \`npm run dev\` from the project root to start frontend and backend.\n`;
     readme += `- Or run \`npm run dev\` in the \`frontend\` and \`backend\` directories individually.\n`;
-  } else {
+  } else if (fs.existsSync(frontendDir)) {
     readme += `Run \`npm run dev\` in the \`frontend\` directory to start the development server.\n`;
   }
 

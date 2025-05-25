@@ -9,10 +9,10 @@ export async function setupAstro(config) {
 
   console.log('\n▶️ Creating Astro frontend...');
   let result = shell.exec(`npm create astro@latest frontend -- --template minimal`, { cwd: targetDir, silent: true });
-  if (!result || result.code !== 0) throw new Error(`Failed to create Astro project in ${frontendDir}`);
+  if (!result || result.code !== 0) throw new Error(`Failed to create Astro project in ${frontendDir}: ${result.stderr || result.stdout}`);
 
   result = shell.exec('npm install', { cwd: frontendDir, silent: true });
-  if (result.code !== 0) throw new Error(`Failed to install dependencies in ${frontendDir}`);
+  if (result.code !== 0) throw new Error(`Failed to install dependencies in ${frontendDir}: ${result.stderr || result.stdout}`);
 
   const indexPath = path.join(frontendDir, 'src', 'pages', 'index.astro');
   if (fs.existsSync(indexPath)) {

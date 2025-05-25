@@ -12,7 +12,7 @@ export async function setupExpressBackend(config) {
 
   console.log(`  Initializing backend package in ${backendDir}...`);
   let result = shell.exec('npm init -y', { cwd: backendDir, silent: true });
-  if (result.code !== 0) throw new Error(`Failed to initialize backend npm package in ${backendDir}`);
+  if (result.code !== 0) throw new Error(`Failed to initialize backend npm package in ${backendDir}: ${result.stderr || result.stdout}`);
 
   console.log("  Installing backend dependencies...");
   const backendDeps = ['express', 'cors', 'dotenv'];
@@ -20,9 +20,9 @@ export async function setupExpressBackend(config) {
   if (useNodemon) backendDevDeps.push('nodemon');
 
   result = shell.exec(`npm install ${backendDeps.join(' ')}`, { cwd: backendDir, silent: true });
-  if (result.code !== 0) throw new Error(`Failed to install backend dependencies in ${backendDir}`);
+  if (result.code !== 0) throw new Error(`Failed to install backend dependencies in ${backendDir}: ${result.stderr || result.stdout}`);
   result = shell.exec(`npm install -D ${backendDevDeps.join(' ')}`, { cwd: backendDir, silent: true });
-  if (result.code !== 0) throw new Error(`Failed to install backend dev dependencies in ${backendDir}`);
+  if (result.code !== 0) throw new Error(`Failed to install backend dev dependencies in ${backendDir}: ${result.stderr || result.stdout}`);
 
   const tsconfigContent = `{
   "compilerOptions": {
