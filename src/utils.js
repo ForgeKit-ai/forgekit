@@ -61,13 +61,13 @@ export async function setupGit(projectRoot) {
   checkCommand(result, `Failed to initialize git repository in ${projectRoot}. Is git installed and in your PATH?`);
 }
 
-export function createProjectStructure(projectRoot, projectName, stack, uiFramework, storybook) {
+export function createProjectStructure(projectRoot, projectName, stack, uiFramework, database) {
   console.log(`\n🏗️ Creating project structure for '${projectName}' at ${projectRoot}...`);
   fs.mkdirSync(projectRoot, { recursive: true });
 
   const docsDir = path.join(projectRoot, "docs");
   fs.mkdirSync(docsDir, { recursive: true });
-  const readmeContent = generateReadme(projectName, stack, uiFramework, storybook);
+  const readmeContent = generateReadme(projectName, stack, uiFramework, database);
   fs.writeFileSync(path.join(projectRoot, "README.md"), readmeContent);
   console.log("↳ Created README.md");
 
@@ -80,32 +80,12 @@ export function createProjectStructure(projectRoot, projectName, stack, uiFramew
   console.log("↳ Created .gitignore");
 }
 
-export function generateReadme(projectName, stack, uiFramework, storybook) {
-    let structure = `- \`frontend/\` – React/Vite frontend`;
-    let gettingStartedDev = `cd frontend\nnpm run dev\n\n# In another terminal for backend:\ncd ../backend\nnpm run dev`;
-    let gettingStartedInstall = `# Install root deps (if any), then frontend and backend deps\nnpm install\ncd frontend && npm install\ncd ../backend && npm install`;
-    let backendSection = `- \`backend/\` – Express API`;
-    let envFiles = `- \`frontend/.env\` (copy from \`frontend/.env.example\`)\n- \`backend/.env\` (copy from \`backend/.env.example\`)`;
-
-    if (stack === "Next.js + Supabase") {
-        structure = `- \`src/\` – Next.js application source (App Router)\n  - \`app/\` – Pages and layouts\n  - \`components/\` – Reusable components\n  - \`lib/\` – Utility functions (e.g., Supabase client)`;
-        backendSection = "";
-        gettingStartedInstall = `# Install dependencies\nnpm install`;
-        gettingStartedDev = `# Run the development server\nnpm run dev`;
-        envFiles = `- \`.env.local\` (copy from \`.env.example\`)`;
-    }
-
-    return `# ${projectName}\n\nWelcome to **${projectName}**! Forged with ForgeKit.\n\n## Overview\n*Provide a brief description of your project.*\n\n## Stack\n- **Framework/API:** ${stack}\n- **UI Framework:** ${uiFramework}\n- **Storybook:** ${storybook ? "Included" : "Not included"}\n- **Database:** Supabase (Setup required)\n\n## Getting Started\n\n1.  **Install Dependencies:**\n    \`\`\`bash\n    ${gettingStartedInstall}\n    \`\`\`\n\n2.  **Environment Setup:**\n    - Locate the \`.env.example\` file(s) mentioned below.\n    - Copy it to a new file (e.g., \`.env.local\` for Next.js, \`.env\` for Vite/Express).\n    - Fill in your Supabase Project URL and Anon Key.\n    - Find these in your Supabase project settings (API section).\n    - **Required Files:**\n      ${envFiles}\n\n3.  **Run Development Servers:**\n    \`\`\`bash\n    ${gettingStartedDev}\n    \`\`\`\n    - The application should now be running (check terminal output for exact URLs).\n\n## Folder Structure\n${structure}\n${backendSection ? backendSection : ''}\n- \`docs/\` – Documentation files\n- \`README.md\` – This file\n- \`CHANGELOG.md\` – Project changes history\n- \`.gitignore\` – Files ignored by Git\n\n## Supabase Setup Reminder\n- Create a project on [Supabase](https://supabase.com/).\n- Get your Project URL and Anon Key from the API settings.\n- Update your environment file(s) as described in "Getting Started".\n- Define your database schema using the Supabase table editor or SQL.`;
+export function generateReadme(projectName, stack, uiFramework, database) {
+  return `# ${projectName}\n\n## Stack\n- **Frontend:** ${stack.frontend}\n${stack.backend ? `- **Backend:** ${stack.backend}\n` : ''}- **UI Library:** ${uiFramework}\n- **Database:** ${database || 'None'}\n`;
 }
 
-export function generateGitignore(stack) {
-  let gitignore = `# Dependencies\n/node_modules\n/.pnp\n.pnp.js\n\n# Build outputs\n/dist\n/build\n/out\n/.next\n\n# Environment variables (keep example files)\n.env\n.env.*\n!.env.example\n.env.local\n\n# Logs\nlogs\n*.log\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\npnpm-debug.log*\nlerna-debug.log*\n\n# OS generated files\n.DS_Store\n.DS_Store?\n._*\n.Spotlight-V100\n.Trashes\nehthumbs.db\nThumbs.db\n\n# Editor directories and files\n.vscode/*\n!.vscode/settings.json\n!.vscode/tasks.json\n!.vscode/launch.json\n!.vscode/extensions.json\n*.sublime-workspace\n.idea\n\n# Optional files\n/.cache`;
-
-  if (stack === "React + Express + Supabase") {
-    gitignore += `\n# React + Express specific\n/frontend/node_modules\n/frontend/dist\n/backend/node_modules\n/backend/dist`;
-  } else if (stack === "Next.js + Supabase") {
-    gitignore += `\n# Next.js specific\n/.next/\n/out/`;
-  }
+export function generateGitignore() {
+  const gitignore = `# Dependencies\n/node_modules\n/.pnp\n.pnp.js\n\n# Build outputs\n/dist\n/build\n/out\n/.next\n\n# Environment variables (keep example files)\n.env\n.env.*\n!.env.example\n.env.local\n\n# Logs\nlogs\n*.log\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\npnpm-debug.log*\nlerna-debug.log*\n\n# OS generated files\n.DS_Store\n.DS_Store?\n._*\n.Spotlight-V100\n.Trashes\nehthumbs.db\nThumbs.db\n\n# Editor directories and files\n.vscode/*\n!.vscode/settings.json\n!.vscode/tasks.json\n!.vscode/launch.json\n!.vscode/extensions.json\n*.sublime-workspace\n.idea\n\n# Optional files\n/.cache`;
 
   return gitignore.trim();
 }

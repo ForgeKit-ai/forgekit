@@ -1,10 +1,10 @@
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
-import { setupSupabase, setupUIFramework, setupStorybook } from '../../utils.js';
+import { setupSupabase, setupUIFramework } from '../../utils.js';
 
 export async function setupSvelteKit(config) {
-  const { targetDir, projectName, ui, storybook } = config;
+  const { targetDir, projectName, ui } = config;
   const frontendDir = path.join(targetDir, 'frontend');
 
   console.log('\n▶️ Creating SvelteKit frontend...');
@@ -22,7 +22,4 @@ export async function setupSvelteKit(config) {
 
   await setupSupabase(frontendDir, 'VITE');
   await setupUIFramework(frontendDir, ui, 'vite');
-  if (storybook) {
-    await setupStorybook(frontendDir);
-  }
 }

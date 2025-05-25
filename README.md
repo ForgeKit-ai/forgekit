@@ -17,10 +17,11 @@ npm install -g @forgekit/cli
 forge
 ```
 
-Running `forge` will prompt you for a project name and desired stack. The
-project is created in the directory where you executed the command, and when
-scaffolding finishes you will be dropped into a shell inside the new project
-folder.
+Running `forge` will prompt you step‑by‑step for a frontend, UI library, backend
+and optional database. Choices are filtered so only compatible combinations are
+shown. The project is created in the directory where you executed the command
+and when scaffolding finishes you will be dropped into a shell inside the new
+project folder.
 
 The tool can also be configured programmatically. Example configuration from the project plan:
 

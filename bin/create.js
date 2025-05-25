@@ -7,24 +7,22 @@ import { hideBin } from 'yargs/helpers';
 import { drawForgeHammer, setupGit, createProjectStructure, sanitizeProjectName } from '../src/utils.js';
 import { spawn } from 'child_process';
 import { scaffoldProject } from '../src/scaffold.js';
-import { stacks } from '../src/registries/stackRegistry.js';
+import { frontendOptions, uiOptions, backendOptions, databaseOptions, uiCompatibility, backendCompatibility, dbCompatibility } from '../src/registries/modularOptions.js';
 import { runDoctor } from '../src/doctor.js';
 
-
 (async () => {
-  // Use the directory where the user ran the command
   const projectsBaseDir = process.cwd();
 
-  const stackKeys = Object.keys(stacks);
   const argv = yargs(hideBin(process.argv))
     .option('projectName', { type: 'string', description: 'Name of the project to create' })
-    .option('stack', { type: 'string', description: 'Tech stack', choices: stackKeys })
-    .option('gitInit', { type: 'boolean', description: 'Initialize git repository', default: true })
-    .option('useNodemon', { type: 'boolean', description: 'Use nodemon for backend (React+Express)', default: true })
-    .option('uiFramework', { type: 'string', description: 'UI framework', choices: ['Tailwind', 'Chakra', 'None'], default: 'None' })
-    .option('storybook', { type: 'boolean', description: 'Include Storybook setup', default: false })
-    .option('nonInteractive', { type: 'boolean', description: 'Run in non-interactive mode', default: false })
-    .option('doctor', { type: 'boolean', description: 'Check ForgeKit installation status' })
+    .option('frontend', { type: 'string', choices: Object.keys(frontendOptions) })
+    .option('ui', { type: 'string', choices: Object.keys(uiOptions) })
+    .option('backend', { type: 'string', choices: Object.keys(backendOptions) })
+    .option('database', { type: 'string', choices: Object.keys(databaseOptions) })
+    .option('gitInit', { type: 'boolean', default: true })
+    .option('useNodemon', { type: 'boolean', default: true })
+    .option('nonInteractive', { type: 'boolean', default: false })
+    .option('doctor', { type: 'boolean' })
     .help()
     .alias('h', 'help')
     .wrap(null)
@@ -37,46 +35,46 @@ import { runDoctor } from '../src/doctor.js';
 
   let options = {};
 
+  const validateCombo = (frontend, ui, backend, database) => {
+    if (ui && !uiCompatibility[frontend].includes(ui)) {
+      throw new Error(`UI option '${ui}' is not compatible with ${frontendOptions[frontend]}`);
+    }
+    if (backendCompatibility[frontend]) {
+      const allowed = backendCompatibility[frontend];
+      if (!allowed.includes(backend)) {
+        throw new Error(`Backend '${backend}' is not compatible with ${frontendOptions[frontend]}`);
+      }
+    }
+    if (database && !dbCompatibility[backend].includes(database)) {
+      throw new Error(`Database '${database}' is not compatible with backend '${backend}'`);
+    }
+  };
+
   if (argv.nonInteractive) {
-    if (!argv.projectName || !argv.stack) {
-      console.error('❌ Error: In non-interactive mode, --projectName and --stack are required.');
-      yargs().showHelp();
+    if (!argv.projectName || !argv.frontend) {
+      console.error('❌ In non-interactive mode, --projectName and --frontend are required.');
       process.exit(1);
     }
-    if (!stacks[argv.stack]) {
-      console.error(`❌ Unknown stack key '${argv.stack}'.`);
-      console.error(`Available stacks: ${Object.keys(stacks).join(', ')}`);
-      process.exit(1);
-    }
-    options = { ...argv };
-    options.gitInit = !!options.gitInit;
-    options.useNodemon = stacks[argv.stack].backend === 'express' ? !!options.useNodemon : false;
-    options.storybook = !!options.storybook;
-
+    const frontend = argv.frontend;
+    const ui = argv.ui || uiCompatibility[frontend][0];
+    const backend = argv.backend ?? backendCompatibility[frontend][0];
+    const database = argv.database || null;
+    try { validateCombo(frontend, ui, backend, database); } catch (err) { console.error(`❌ ${err.message}`); process.exit(1); }
+    options = { projectName: argv.projectName, frontend, ui, backend, database, gitInit: !!argv.gitInit, useNodemon: backend === 'express' ? !!argv.useNodemon : false };
     console.log('\n⚙️ Running in Non-Interactive Mode with options:');
-    console.log(`  Project Name: ${options.projectName}`);
-    console.log(`  Stack: ${options.stack} (${stacks[options.stack].label})`);
-    console.log(`  Git Init: ${options.gitInit}`);
-    if (stacks[options.stack].backend === 'express') {
-        console.log(`  Use Nodemon: ${options.useNodemon}`);
-    }
-    console.log(`  UI Framework: ${options.uiFramework}`);
-    console.log(`  Storybook: ${options.storybook}`);
-
+    console.log(options);
   } else {
-    const stackChoicesInteractive = Object.entries(stacks).map(([key, val]) => ({ name: val.label, value: key }));
     const answers = await inquirer.prompt([
-      { type: 'input', name: 'projectName', message: 'Project name:', validate: input => !!input || 'Project name cannot be empty.' },
-      { type: 'list', name: 'stack', message: 'Choose your tech stack:', choices: stackChoicesInteractive },
+      { type: 'input', name: 'projectName', message: 'Project name:', validate: i => !!i || 'Project name cannot be empty.' },
+      { type: 'list', name: 'frontend', message: 'Choose a frontend framework:', choices: Object.entries(frontendOptions).map(([k,v]) => ({ name: v, value: k })) },
+      { type: 'list', name: 'ui', message: 'Choose a UI library:', choices: ans => uiCompatibility[ans.frontend].map(k => ({ name: uiOptions[k], value: k })) },
+      { type: 'list', name: 'backend', message: 'Choose a backend framework:', choices: ans => backendCompatibility[ans.frontend].map(k => ({ name: backendOptions[k], value: k })) },
+      { type: 'confirm', name: 'useDb', message: 'Add a local database?', default: false },
+      { type: 'list', name: 'database', when: ans => ans.useDb, message: 'Choose a database:', choices: ans => dbCompatibility[ans.backend].map(k => ({ name: databaseOptions[k], value: k })) },
       { type: 'confirm', name: 'gitInit', message: 'Initialize a Git repository?', default: true },
-      { type: 'confirm', name: 'useNodemon', message: 'Enable Nodemon for automatic backend restarts during development. Recommended for a smoother and faster dev workflow.', default: true, when: (ans) => stacks[ans.stack].backend === 'express' },
-      { type: 'list', name: 'uiFramework', message: 'Choose a UI framework:', choices: ['Tailwind', 'Chakra', 'None'], default: 'None' },
-      { type: 'confirm', name: 'storybook', message: 'Include Storybook setup?', default: false },
+      { type: 'confirm', name: 'useNodemon', message: 'Enable Nodemon for automatic backend restarts?', default: true, when: ans => ans.backend === 'express' }
     ]);
-    options = { ...answers };
-    if (stacks[options.stack].backend !== 'express') {
-        options.useNodemon = false;
-    }
+    options = { projectName: answers.projectName, frontend: answers.frontend, ui: answers.ui, backend: answers.backend, database: answers.database || null, gitInit: answers.gitInit, useNodemon: answers.backend === 'express' ? answers.useNodemon : false };
   }
 
   const sanitizedName = sanitizeProjectName(options.projectName);
@@ -87,47 +85,40 @@ import { runDoctor } from '../src/doctor.js';
 
   drawForgeHammer();
   console.log(`🔥 Starting project setup for: ${options.projectName}`);
-  console.log(`Selected Stack: ${stacks[options.stack].label}`);
 
   const projectRoot = path.join(projectsBaseDir, options.projectName);
   console.log(`Project will be created at: ${projectRoot}`);
 
   if (fs.existsSync(projectRoot)) {
-      if (argv.nonInteractive) {
-          console.error(`❌ Error: Project directory '${projectRoot}' already exists.`);
-          process.exit(1);
-      }
-      const { confirm } = await inquirer.prompt([{ type: 'confirm', name: 'confirm', message: `Directory '${options.projectName}' already exists at '${projectRoot}'. Continue?`, default: false }]);
-      if (!confirm) {
-          console.log('Aborting project creation.');
-          process.exit(0);
-      }
-      console.log('Proceeding with existing directory...');
+    const { confirm } = await inquirer.prompt([{ type: 'confirm', name: 'confirm', message: `Directory '${options.projectName}' already exists at '${projectRoot}'. Continue?`, default: false }]);
+    if (!confirm) {
+      console.log('Aborting project creation.');
+      process.exit(0);
+    }
+    console.log('Proceeding with existing directory...');
   }
 
-  if (stacks[options.stack].frontend !== 'nextjs') {
-      createProjectStructure(projectRoot, options.projectName, stacks[options.stack].label, options.uiFramework, options.storybook);
+  if (options.frontend !== 'nextjs') {
+    createProjectStructure(projectRoot, options.projectName, { frontend: frontendOptions[options.frontend], backend: backendOptions[options.backend] }, options.ui, options.database);
   }
 
   if (options.gitInit) {
-      if (!fs.existsSync(projectRoot)) {
-         fs.mkdirSync(projectRoot, { recursive: true });
-         console.log(`Created project directory: ${projectRoot}`);
-      }
-      await setupGit(projectRoot);
+    if (!fs.existsSync(projectRoot)) {
+      fs.mkdirSync(projectRoot, { recursive: true });
+      console.log(`Created project directory: ${projectRoot}`);
+    }
+    await setupGit(projectRoot);
   }
 
-  const stackConfig = stacks[options.stack];
   const config = {
     projectName: options.projectName,
     targetDir: projectRoot,
-    frontend: stackConfig.frontend,
-    backend: stackConfig.backend,
-    ui: options.uiFramework,
-    storybook: options.storybook,
+    frontend: options.frontend,
+    backend: options.backend,
+    ui: options.ui,
     useNodemon: options.useNodemon,
-    stackLabel: stackConfig.label,
-    database: stackConfig.database
+    database: options.database,
+    stackLabel: `${frontendOptions[options.frontend]}${options.backend ? ' + ' + backendOptions[options.backend] : ''}`
   };
 
   try {
@@ -136,9 +127,6 @@ import { runDoctor } from '../src/doctor.js';
     console.log('\n===================================================');
     console.log(`✅ Project '${options.projectName}' has been forged successfully!`);
     console.log(`📂 Located at: ${projectRoot}`);
-    console.log('\nNext Steps:');
-    console.log('  Review & fill in your Supabase credentials in the .env files (see README.md).');
-    console.log('  Run "npm run dev" in the project root to start both frontend and backend!');
     console.log('\nHappy coding! 🎉');
 
     console.log(`\nOpening shell in ${projectRoot} ...`);
@@ -146,11 +134,11 @@ import { runDoctor } from '../src/doctor.js';
     shellProcess.on('exit', code => process.exit(code));
 
   } catch (error) {
-      console.error('\n❌ An unexpected error occurred during setup:');
-      console.error(error.message || error);
-      if (error.stack) {
-        console.error(error.stack);
-      }
-      process.exit(1);
+    console.error('\n❌ An unexpected error occurred during setup:');
+    console.error(error.message || error);
+    if (error.stack) {
+      console.error(error.stack);
+    }
+    process.exit(1);
   }
 })();
