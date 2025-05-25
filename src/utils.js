@@ -61,7 +61,7 @@ export async function setupGit(projectRoot) {
   checkCommand(result, `Failed to initialize git repository in ${projectRoot}. Is git installed and in your PATH?`);
 }
 
-export function createProjectStructure(projectRoot, projectName, stack, uiFramework, database) {
+export function createProjectStructure(projectRoot, projectName, stack, uiFramework, database, gitInit = true) {
   console.log(`\n🏗️ Creating project structure for '${projectName}' at ${projectRoot}...`);
   fs.mkdirSync(projectRoot, { recursive: true });
 
@@ -75,9 +75,11 @@ export function createProjectStructure(projectRoot, projectName, stack, uiFramew
   fs.writeFileSync(path.join(projectRoot, "CHANGELOG.md"), changelogContent);
   console.log("↳ Created CHANGELOG.md");
 
-  const gitignoreContent = generateGitignore(stack);
-  fs.writeFileSync(path.join(projectRoot, ".gitignore"), gitignoreContent);
-  console.log("↳ Created .gitignore");
+  if (gitInit) {
+    const gitignoreContent = generateGitignore(stack);
+    fs.writeFileSync(path.join(projectRoot, ".gitignore"), gitignoreContent);
+    console.log("↳ Created .gitignore");
+  }
 }
 
 export function generateReadme(projectRoot, projectName, stack, uiFramework, database) {

@@ -23,7 +23,7 @@ export async function setupNextJS(config) {
   if (result.code !== 0) throw new Error(`Failed to create Next.js project '${projectName}': ${result.stderr || result.stdout}`);
 
   console.log("\n📝 Adding DevForge structure files...");
-  createProjectStructure(targetDir, projectName, stackLabel, ui, config.database);
+  createProjectStructure(targetDir, projectName, stackLabel, ui, config.database, config.gitInit);
 
   await setupSupabase(targetDir, 'NEXT_PUBLIC');
   if (ui !== 'Tailwind') {

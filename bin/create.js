@@ -99,7 +99,14 @@ import { runDoctor } from '../src/doctor.js';
   }
 
   if (options.frontend !== 'nextjs') {
-    createProjectStructure(projectRoot, options.projectName, { frontend: frontendOptions[options.frontend], backend: backendOptions[options.backend] }, options.ui, options.database);
+    createProjectStructure(
+      projectRoot,
+      options.projectName,
+      { frontend: frontendOptions[options.frontend], backend: backendOptions[options.backend] },
+      options.ui,
+      options.database,
+      options.gitInit
+    );
   }
 
   if (options.gitInit) {
@@ -118,7 +125,8 @@ import { runDoctor } from '../src/doctor.js';
     ui: options.ui,
     useNodemon: options.useNodemon,
     database: options.database,
-    stackLabel: `${frontendOptions[options.frontend]}${options.backend ? ' + ' + backendOptions[options.backend] : ''}`
+    stackLabel: `${frontendOptions[options.frontend]}${options.backend ? ' + ' + backendOptions[options.backend] : ''}`,
+    gitInit: options.gitInit
   };
 
   try {
