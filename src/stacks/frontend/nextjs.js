@@ -25,7 +25,9 @@ export async function setupNextJS(config) {
   console.log("\n📝 Adding DevForge structure files...");
   createProjectStructure(targetDir, projectName, stackLabel, ui, config.database);
 
-  await setupSupabase(targetDir, 'NEXT_PUBLIC');
+  if (config.database === 'supabase') {
+    await setupSupabase(targetDir, 'NEXT_PUBLIC');
+  }
   if (ui !== 'Tailwind') {
      await setupUIFramework(targetDir, ui, 'nextjs');
   }

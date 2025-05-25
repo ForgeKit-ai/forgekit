@@ -24,6 +24,8 @@ export async function setupSvelteKit(config) {
     fs.writeFileSync(pagePath, content);
   }
 
-  await setupSupabase(frontendDir, 'VITE');
+  if (config.database === 'supabase') {
+    await setupSupabase(frontendDir, 'VITE');
+  }
   await setupUIFramework(frontendDir, ui, 'vite');
 }

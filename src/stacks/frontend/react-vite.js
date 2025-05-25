@@ -70,6 +70,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     fs.writeFileSync(indexCssPath, 'body { margin: 0; font-family: sans-serif; }\n');
   }
 
-  await setupSupabase(frontendDir, 'VITE');
+  if (config.database === 'supabase') {
+    await setupSupabase(frontendDir, 'VITE');
+  }
   await setupUIFramework(frontendDir, ui, 'vite');
 }
