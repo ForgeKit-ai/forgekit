@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
+import { spawnSync } from 'child_process';
 import { createProjectStructure, setupSupabase, setupUIFramework } from '../../utils.js';
 
 export async function setupNextJS(config) {
@@ -19,8 +20,11 @@ export async function setupNextJS(config) {
   fs.mkdirSync(parentDir, { recursive: true });
 
   const createCommand = `npx create-next-app@latest "${projectName}" ${cnaFlags}`;
-  let result = shell.exec(createCommand, { cwd: parentDir });
-  if (result.code !== 0) throw new Error(`Failed to create Next.js project '${projectName}': ${result.stderr || result.stdout}`);
+  const result = spawnSync(createCommand, { cwd: parentDir, stdio: 'inherit', shell: true });
+  if (result.status !== 0) {
+    const errMsg = result.error ? result.error.message : `exit code ${result.status}`;
+    throw new Error(`Failed to create Next.js project '${projectName}': ${errMsg}`);
+  }
 
   console.log("\n📝 Adding DevForge structure files...");
   createProjectStructure(targetDir, projectName, stackLabel, ui, config.database, config.gitInit);
