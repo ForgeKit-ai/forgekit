@@ -61,3 +61,13 @@ forge --doctor
 
 ForgeKit aims to streamline bootstrapping modern JavaScript projects by providing a collection of ready‑to‑use stacks with minimal setup hassle.
 
+## Maintainers
+
+When stack options change (for example in `src/registries/modularOptions.js`), run
+
+```bash
+npm run generate-stack-docs
+```
+
+to refresh `STACKS.md`.
+
