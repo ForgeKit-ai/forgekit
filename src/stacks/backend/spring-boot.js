@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
+import { checkCommand } from '../../utils.js';
 
 export async function setupSpringBoot(config) {
   const { targetDir, projectName } = config;
@@ -9,7 +10,8 @@ export async function setupSpringBoot(config) {
   console.log('\n◀️ Setting up backend (Spring Boot)...');
   fs.mkdirSync(backendDir, { recursive: true });
 
-  shell.exec('mvn -q archetype:generate -DgroupId=com.example -DartifactId=backend -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false', { cwd: backendDir, silent: true });
+  let result = shell.exec('mvn -q archetype:generate -DgroupId=com.example -DartifactId=backend -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false', { cwd: backendDir, silent: true });
+  checkCommand(result, 'Failed to generate Spring Boot project');
 
   const appJavaDir = path.join(backendDir, 'src', 'main', 'java', 'com', 'example');
   fs.mkdirSync(appJavaDir, { recursive: true });
