@@ -36,8 +36,14 @@ export async function setupVueVite(config) {
 
   if (fs.existsSync(mainTsPath)) {
     let mainContent = fs.readFileSync(mainTsPath, 'utf-8');
-    if (ui === 'Chakra' && !mainContent.includes('ChakraProvider')) {
-      mainContent = mainContent.replace('createApp(App)', 'createApp(App)'); // placeholder for modifications
+    if (ui === 'Chakra') {
+      mainContent = `import { createApp } from 'vue';\n` +
+        `import App from './App.vue';\n` +
+        `import { ChakraPlugin } from '@chakra-ui/vue-next';\n` +
+        `import './style.css';\n\n` +
+        `const app = createApp(App);\n` +
+        `app.use(ChakraPlugin);\n` +
+        `app.mount('#app');\n`;
     }
     fs.writeFileSync(mainTsPath, mainContent);
   }
