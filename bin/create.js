@@ -9,11 +9,13 @@ import { spawn } from 'child_process';
 import { scaffoldProject } from '../src/scaffold.js';
 import { frontendOptions, uiOptions, backendOptions, databaseOptions, uiCompatibility, backendCompatibility, dbCompatibility } from '../src/registries/modularOptions.js';
 import { runDoctor } from '../src/doctor.js';
+import * as deployCommand from '../commands/deploy.js';
 
-(async () => {
+async function main() {
   const projectsBaseDir = process.cwd();
 
-  const argv = yargs(hideBin(process.argv))
+  const argv = await yargs(hideBin(process.argv))
+    .command(deployCommand)
     .option('projectName', { type: 'string', description: 'Name of the project to create' })
     .option('frontend', { type: 'string', choices: Object.keys(frontendOptions) })
     .option('ui', { type: 'string', choices: Object.keys(uiOptions) })
@@ -26,7 +28,11 @@ import { runDoctor } from '../src/doctor.js';
     .help()
     .alias('h', 'help')
     .wrap(null)
-    .argv;
+    .parse();
+
+  if (argv._[0] === 'deploy') {
+    return;
+  }
 
   if (argv.doctor) {
     runDoctor();
@@ -149,4 +155,6 @@ import { runDoctor } from '../src/doctor.js';
     }
     process.exit(1);
   }
-})();
+}
+
+main();
