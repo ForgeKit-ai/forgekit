@@ -46,28 +46,30 @@ export async function setupExpressBackend(config) {
 
   const backendSrcDir = path.join(backendDir, 'src');
   fs.mkdirSync(backendSrcDir, { recursive: true });
-  const indexTsContent = `import express, { Request, Response } from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-
-dotenv.config();
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-const port = process.env.PORT || 3001;
-
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello from the Express Backend!');
-});
-
-app.get('/api/message', (req: Request, res: Response) => {
-  res.json({ message: 'This is a message from your API' });
-});
-
-app.listen(port, () => {
-  console.log(\`🚀 Backend server listening on http://localhost:\${port}\`);
-});`;
+  const indexTsContent = [
+    "import express, { Request, Response } from 'express';",
+    "import cors from 'cors';",
+    "import dotenv from 'dotenv';",
+    "",
+    "dotenv.config();",
+    "const app = express();",
+    "app.use(cors());",
+    "app.use(express.json());",
+    "",
+    "const port = process.env.PORT || 3001;",
+    "",
+    "app.get('/', (req: Request, res: Response) => {",
+    "  res.send('Hello from the Express Backend!');",
+    "});",
+    "",
+    "app.get('/api/message', (req: Request, res: Response) => {",
+    "  res.json({ message: 'This is a message from your API' });",
+    "});",
+    "",
+    "app.listen(port, () => {",
+    "  console.log(`🚀 Backend server listening on http://localhost:${port}`);",
+    "});",
+  ].join('\n');
   fs.writeFileSync(path.join(backendSrcDir, 'index.ts'), indexTsContent);
   console.log(`↳ Created src/index.ts in backend`);
 
