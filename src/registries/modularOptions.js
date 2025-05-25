@@ -34,11 +34,11 @@ export const databaseOptions = {
 };
 
 export const uiCompatibility = {
-  'react-vite': ['Tailwind', 'Chakra'],
-  'nextjs': ['Tailwind', 'Chakra'],
-  'vue-vite': ['Tailwind'],
-  'sveltekit': ['Tailwind'],
-  'astro': ['Tailwind'],
+  'react-vite': ['Tailwind', 'Chakra', 'None'],
+  'nextjs': ['Tailwind', 'Chakra', 'None'],
+  'vue-vite': ['Tailwind', 'None'],
+  'sveltekit': ['Tailwind', 'None'],
+  'astro': ['Tailwind', 'None'],
   'blazor': ['None'],
   'godot': ['None']
 };
