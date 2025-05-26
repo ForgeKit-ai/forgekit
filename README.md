@@ -62,8 +62,17 @@ forge --doctor
 Run this command to publish your project. It will:
 
 - Build the project.
-- Bundle the `dist/` directory into `bundle.tar.gz`.
+- Bundle your build output into `bundle.tar.gz` (defaults to `dist/`, overridable with `--build-dir`).
 - Upload the archive to ForgeKit hosting.
+
+If a `forgekit.json` file exists it will be used to auto-detect the build directory based on the scaffolded stack.
+The deploy endpoint can be customized with the `FORGEKIT_DEPLOY_URL` environment variable.
+
+Example:
+
+```bash
+forge deploy --build-dir .next
+```
 
 ## Purpose
 
