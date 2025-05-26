@@ -57,6 +57,20 @@ You can verify your environment at any time with the built in doctor command:
 forge --doctor
 ```
 
+## `forge login`
+
+Run this command to authenticate the CLI with your ForgeKit account. Your web
+browser will open to complete the login flow and the received token will be
+stored in `~/.forgekit/config.json`.
+
+Example config file:
+
+```json
+{
+  "token": "USER_JWT"
+}
+```
+
 ## `forge deploy`
 
 Run this command to publish your project. It will:
@@ -64,6 +78,9 @@ Run this command to publish your project. It will:
 - Build the project.
 - Bundle your build output into `bundle.tar.gz` (defaults to `dist/`, overridable with `--build-dir`).
 - Upload the archive to ForgeKit hosting.
+
+If you are not logged in, the command will open a browser and prompt you to
+authenticate before deploying.
 
 If a `forgekit.json` file exists it will be used to auto-detect the build directory based on the scaffolded stack.
 The deploy endpoint can be customized with the `FORGEKIT_DEPLOY_URL` environment variable.
