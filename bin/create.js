@@ -10,12 +10,14 @@ import { scaffoldProject } from '../src/scaffold.js';
 import { frontendOptions, uiOptions, backendOptions, databaseOptions, uiCompatibility, backendCompatibility, dbCompatibility } from '../src/registries/modularOptions.js';
 import { runDoctor } from '../src/doctor.js';
 import * as deployCommand from '../commands/deploy.js';
+import * as loginCommand from '../commands/login.js';
 
 async function main() {
   const projectsBaseDir = process.cwd();
 
   const argv = await yargs(hideBin(process.argv))
     .command(deployCommand)
+    .command(loginCommand)
     .option('projectName', { type: 'string', description: 'Name of the project to create' })
     .option('frontend', { type: 'string', choices: Object.keys(frontendOptions) })
     .option('ui', { type: 'string', choices: Object.keys(uiOptions) })
@@ -30,7 +32,7 @@ async function main() {
     .wrap(null)
     .parse();
 
-  if (argv._[0] === 'deploy') {
+  if (argv._[0] === 'deploy' || argv._[0] === 'login') {
     return;
   }
 
