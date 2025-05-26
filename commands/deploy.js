@@ -7,6 +7,7 @@ const require = createRequire(import.meta.url);
 const tar = require('tar');
 import axios from 'axios';
 import FormData from 'form-data';
+import { ensureLoggedIn } from '../src/auth.js';
 
 const asyncExec = promisify(exec);
 
@@ -48,6 +49,12 @@ function detectBuildDir(argv) {
 }
 
 export const handler = async (argv = {}) => {
+  const token = await ensureLoggedIn();
+  if (!token) {
+    console.error('❌ Unable to authenticate. Deployment canceled.');
+    return;
+  }
+
   const bundlePath = path.join(process.cwd(), 'bundle.tar.gz');
   const buildDir = detectBuildDir(argv);
   try {
@@ -69,12 +76,16 @@ export const handler = async (argv = {}) => {
     form.append('file', fs.createReadStream(bundlePath));
     const deployUrl = process.env.FORGEKIT_DEPLOY_URL || 'http://178.156.171.10:3001/deploy_cli';
     const res = await axios.post(deployUrl, form, {
-      headers: form.getHeaders(),
+      headers: { ...form.getHeaders(), Authorization: `Bearer ${token}` },
     });
     const url = res.data && res.data.url;
     console.log(`Deployed at: ${url}`);
   } catch (err) {
-    console.error('❌ Deployment failed:', err.message || err);
+    if (err.response && err.response.status === 401) {
+      console.error('❌ Deployment failed: unauthorized. Try running `forge login` again.');
+    } else {
+      console.error('❌ Deployment failed:', err.message || err);
+    }
   } finally {
     try {
       fs.unlinkSync(bundlePath);
