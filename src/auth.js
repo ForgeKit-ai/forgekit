@@ -46,7 +46,7 @@ export function getSavedToken() {
 
 export async function login() {
   const loginUrl =
-    'https://forgekit.ai/login?cli=true&callback=http://localhost:3456';
+    'http://localhost:3000/login?cli=true&callback=http://localhost:3456';
   return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
       const url = new URL(req.url, 'http://localhost:3456');
