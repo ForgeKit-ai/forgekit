@@ -2,10 +2,30 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import http from 'http';
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
 
 const CONFIG_DIR = path.join(os.homedir(), '.forgekit');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
+
+function openBrowser(url) {
+  let command;
+  let args = [];
+  if (process.platform === 'darwin') {
+    command = 'open';
+    args = [url];
+  } else if (process.platform === 'win32') {
+    command = 'cmd';
+    args = ['/c', 'start', '', url];
+  } else {
+    command = 'xdg-open';
+    args = [url];
+  }
+  const child = spawn(command, args, {
+    detached: true,
+    stdio: 'ignore'
+  });
+  child.unref();
+}
 
 export function getSavedToken() {
   if (process.env.FORGEKIT_TOKEN) return process.env.FORGEKIT_TOKEN;
@@ -53,13 +73,7 @@ export async function login() {
 
     server.listen(3456, () => {
       console.log('Opening browser for login...');
-      const cmd =
-        process.platform === 'darwin'
-          ? 'open'
-          : process.platform === 'win32'
-          ? 'start'
-          : 'xdg-open';
-      exec(`${cmd} "${loginUrl}"`);
+      openBrowser(loginUrl);
     });
   });
 }
