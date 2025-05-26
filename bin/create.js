@@ -138,6 +138,25 @@ async function main() {
   try {
     await scaffoldProject(config);
 
+    const buildDirMap = {
+      'react-vite': 'dist',
+      'vue-vite': 'dist',
+      'sveltekit': 'build',
+      'nextjs': '.next',
+      'astro': 'dist',
+      'blazor': 'dist',
+      'godot': 'dist'
+    };
+    const forgeCfg = {
+      frontend: options.frontend,
+      backend: options.backend,
+      ui: options.ui,
+      database: options.database,
+      buildDir: buildDirMap[options.frontend] || 'dist'
+    };
+    fs.writeFileSync(path.join(projectRoot, 'forgekit.json'), JSON.stringify(forgeCfg, null, 2));
+    console.log('↳ Created forgekit.json');
+
     console.log('\n===================================================');
     console.log(`✅ Project '${options.projectName}' has been forged successfully!`);
     console.log(`📂 Located at: ${projectRoot}`);
