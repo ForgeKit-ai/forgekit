@@ -63,6 +63,11 @@ export const handler = async (argv = {}) => {
   const dockerignorePath = path.join(process.cwd(), '.dockerignore');
 
   const envVarNames = await detectEnvVars(process.cwd());
+  if (envVarNames.length) {
+    console.log(`🧪 Injecting the following build-time environment variables: ${envVarNames.join(', ')}`);
+  } else {
+    console.log('🧪 No build-time environment variables detected.');
+  }
   const envPairs = {};
   for (const name of envVarNames) {
     envPairs[name] = process.env[name];

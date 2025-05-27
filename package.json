@@ -23,6 +23,7 @@
   },
   "scripts": {
     "test": "node test/stack-implementation.test.js && node test/deploy-missing-dir.test.js && node test/dockerignore-util.test.js && node test/env-detect.test.js",
+
     "generate-stack-docs": "node scripts/generate-stack-docs.js"
   },
   "dependencies": {
