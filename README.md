@@ -77,6 +77,7 @@ Run this command to publish your project. It will:
 
 - Build the project.
 - Bundle your build output into `bundle.tar.gz` (defaults to `dist/`, overridable with `--build-dir`).
+- Auto-generate a `.dockerignore` based on your stack so dev-only files stay out of the bundle.
 - Upload the archive to ForgeKit hosting.
 
 If you are not logged in, the command will open a browser and prompt you to
