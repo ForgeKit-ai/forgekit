@@ -9,6 +9,7 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { ensureLoggedIn } from '../src/auth.js';
 import { generateDockerfile } from '../src/utils/dockerfile.js';
+import { generateDockerignore } from '../src/utils/dockerignore.js';
 
 const asyncExec = promisify(exec);
 
@@ -79,7 +80,9 @@ export const handler = async (argv = {}) => {
   }
   
   let dockerfileGeneratedAndStackName = null; // To store stack name for logging
+  let dockerignoreGenerated = false;
   const dockerfilePath = path.join(process.cwd(), 'Dockerfile');
+  const dockerignorePath = path.join(process.cwd(), '.dockerignore');
 
   try {
     // Dockerfile generation logic
@@ -112,6 +115,24 @@ export const handler = async (argv = {}) => {
         // Log a warning if Dockerfile couldn't be generated for a supposedly supported stack
         console.warn(`⚠️ Could not generate Dockerfile for stack: ${stackForDockerfile}. This stack might not be supported for auto-generation or an internal issue occurred.`);
       }
+
+    }
+
+    // Dockerignore generation logic (always run once per deploy)
+    if (!fs.existsSync(dockerignorePath)) {
+      const forgeConfig = readForgeConfig();
+      let stackName = forgeConfig.stack || forgeConfig.frontend || forgeConfig.backend;
+      if (!stackName) {
+        stackName = 'node';
+      }
+      let nextStandalone = false;
+      if (stackName.startsWith('nextjs') && fs.existsSync('next.config.js')) {
+        const nextCfg = fs.readFileSync('next.config.js', 'utf-8');
+        nextStandalone = /output\s*:\s*['\"]standalone['\"]/.test(nextCfg);
+      }
+      const diContent = generateDockerignore(stackName, { nextStandalone });
+      fs.writeFileSync(dockerignorePath, diContent);
+      dockerignoreGenerated = true;
     }
 
     const useYarn = fs.existsSync('yarn.lock');
@@ -139,6 +160,9 @@ export const handler = async (argv = {}) => {
     // Include Dockerfile if it exists or was auto-generated
     if (fs.existsSync(dockerfilePath)) {
       filesToBundle.push('Dockerfile');
+    }
+    if (fs.existsSync(dockerignorePath)) {
+      filesToBundle.push('.dockerignore');
     }
 
     await tar.c({ gzip: true, file: bundlePath }, filesToBundle);
@@ -182,6 +206,13 @@ export const handler = async (argv = {}) => {
         // console.log('🗑️ Auto-generated Dockerfile removed.'); // Optional: for verbose logging
       } catch (err) {
         console.warn(`⚠️ Could not remove auto-generated Dockerfile: ${err.message}`);
+      }
+    }
+    if (dockerignoreGenerated && fs.existsSync(dockerignorePath)) {
+      try {
+        fs.unlinkSync(dockerignorePath);
+      } catch (err) {
+        console.warn(`⚠️ Could not remove auto-generated .dockerignore: ${err.message}`);
       }
     }
   }
