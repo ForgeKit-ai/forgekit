@@ -11,6 +11,7 @@ import { frontendOptions, uiOptions, backendOptions, databaseOptions, uiCompatib
 import { runDoctor } from '../src/doctor.js';
 import * as deployCommand from '../commands/deploy.js';
 import * as loginCommand from '../commands/login.js';
+import * as secretsSetCommand from '../commands/secrets-set.js';
 
 async function main() {
   const projectsBaseDir = process.cwd();
@@ -18,6 +19,7 @@ async function main() {
   const argv = await yargs(hideBin(process.argv))
     .command(deployCommand)
     .command(loginCommand)
+    .command(secretsSetCommand)
     .option('projectName', { type: 'string', description: 'Name of the project to create' })
     .option('frontend', { type: 'string', choices: Object.keys(frontendOptions) })
     .option('ui', { type: 'string', choices: Object.keys(uiOptions) })
@@ -32,7 +34,7 @@ async function main() {
     .wrap(null)
     .parse();
 
-  if (argv._[0] === 'deploy' || argv._[0] === 'login') {
+  if (argv._[0] === 'deploy' || argv._[0] === 'login' || argv._[0] === 'secrets:set') {
     return;
   }
 
@@ -150,6 +152,7 @@ async function main() {
       'godot': 'dist'
     };
     const forgeCfg = {
+      projectName: options.projectName,
       frontend: options.frontend,
       backend: options.backend,
       ui: options.ui,
