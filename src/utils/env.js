@@ -35,5 +35,7 @@ export async function detectEnvVars(cwd = process.cwd()) {
     } catch {}
   }
 
-  return Array.from(vars).filter(v => process.env[v] && envAllowed(v));
+  return Array.from(vars).filter(v =>
+    Object.prototype.hasOwnProperty.call(process.env, v) && envAllowed(v)
+  );
 }
