@@ -44,11 +44,13 @@ export function getSavedToken() {
   return null;
 }
 
-export async function login() {
+export async function login(opts = {}) {
+  const { debug = false } = opts;
   const loginUrl =
     'http://localhost:3000/login?cli=true&callback=http://localhost:3456';
   return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
+      if (debug) console.log('Incoming request:', req.url);
       const url = new URL(req.url, 'http://localhost:3456');
       const token = url.searchParams.get('token');
       if (token) {
@@ -57,11 +59,13 @@ export async function login() {
           fs.writeFileSync(CONFIG_PATH, JSON.stringify({ token }, null, 2));
           res.end('Login successful. You can close this window.');
           console.log('✅ Logged in successfully');
+          clearTimeout(timeout);
           server.close();
           resolve(token);
         } catch (err) {
           res.statusCode = 500;
           res.end('Failed to save token');
+          clearTimeout(timeout);
           server.close();
           reject(err);
         }
@@ -72,9 +76,17 @@ export async function login() {
     });
 
     server.listen(3456, () => {
+      if (debug)
+        console.log('✅ Login server listening at http://localhost:3456');
       console.log('Opening browser for login...');
       openBrowser(loginUrl);
     });
+
+    const timeout = setTimeout(() => {
+      console.error('❌ Login timeout. No request received on port 3456.');
+      server.close();
+      reject(new Error('Login timeout'));
+    }, 180_000);
   });
 }
 
