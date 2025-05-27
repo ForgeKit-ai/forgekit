@@ -11,11 +11,15 @@ export const builder = (yargs) => {
   yargs.positional('file', {
     describe: 'Path to the .env file to upload (e.g., .env, .env.local, .env.production)',
     type: 'string',
+  }).option('create', {
+    type: 'boolean',
+    default: false,
+    describe: 'Create the project on the secrets server if it does not exist',
   });
 };
 
 export const handler = async (argv) => {
-  const { file } = argv;
+  const { file, create } = argv;
   const validEnvFiles = ['.env', '.env.local', '.env.production'];
   const ext = path.extname(file);
   const basename = path.basename(file);
@@ -70,11 +74,39 @@ export const handler = async (argv) => {
     process.exit(1);
   }
 
+  const baseUrl = process.env.FORGEKIT_SECRETS_URL || 'http://178.156.171.10:3001';
+
+  // Check if project exists before uploading
+  try {
+    await axios.get(`${baseUrl}/projects/${slug}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      if (!create) {
+        console.error(`❌ Project "${slug}" does not exist on the secrets server.`);
+        console.error('Run `forge deploy` first or use the --create flag to create it automatically.');
+        process.exit(1);
+      }
+      try {
+        await axios.post(`${baseUrl}/projects`, { slug }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log(`✅ Project "${slug}" created on secrets server.`);
+      } catch (err) {
+        console.error(`❌ Failed to create project: ${err.response?.data?.message || err.message}`);
+        process.exit(1);
+      }
+    } else {
+      console.error(`❌ Failed to verify project: ${error.response?.data?.message || error.message}`);
+      process.exit(1);
+    }
+  }
+
   // 4. Send POST to deploy server
   const form = new FormData();
   form.append('file', fs.createReadStream(file));
-
-  const deployServerUrl = `http://178.156.171.10:3001/env/${slug}`;
+  const deployServerUrl = `${baseUrl}/env/${slug}`;
 
   try {
     await axios.post(deployServerUrl, form, {
