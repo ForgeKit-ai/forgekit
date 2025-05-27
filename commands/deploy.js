@@ -10,7 +10,7 @@ import FormData from 'form-data';
 import { ensureLoggedIn } from '../src/auth.js';
 import { generateDockerfile } from '../src/utils/dockerfile.js';
 import { generateDockerignore, filesFromDockerignore } from '../src/utils/dockerignore.js';
-import { detectEnvVars } from '../src/utils/env.js';
+import { detectEnvVars, loadEnvFiles } from '../src/utils/env.js';
 
 const asyncExec = promisify(exec);
 
@@ -62,6 +62,7 @@ export const handler = async (argv = {}) => {
   const dockerfilePath = path.join(process.cwd(), 'Dockerfile');
   const dockerignorePath = path.join(process.cwd(), '.dockerignore');
 
+  loadEnvFiles(process.cwd());
   const envVarNames = await detectEnvVars(process.cwd());
   if (envVarNames.length) {
     console.log(`🧪 Injecting the following build-time environment variables: ${envVarNames.join(', ')}`);
