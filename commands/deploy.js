@@ -125,7 +125,11 @@ export const handler = async (argv = {}) => {
     }
 
     console.log(`📦 Bundling ${buildDir}/ into bundle.tar.gz...`);
-    await tar.c({ gzip: true, file: bundlePath }, [buildDir]);
+    const filesToBundle = [buildDir];
+    if (fs.existsSync(dockerfilePath)) {
+      filesToBundle.push('Dockerfile');
+    }
+    await tar.c({ gzip: true, file: bundlePath }, filesToBundle);
 
     if (dockerfileGeneratedAndStackName) {
       console.log(`🛠️ Generating Dockerfile for stack: ${dockerfileGeneratedAndStackName}`);
