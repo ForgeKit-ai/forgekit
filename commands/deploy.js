@@ -126,9 +126,21 @@ export const handler = async (argv = {}) => {
 
     console.log(`📦 Bundling ${buildDir}/ into bundle.tar.gz...`);
     const filesToBundle = [buildDir];
+
+    // Always include core project metadata files
+    ['package.json', 'package-lock.json', 'yarn.lock'].forEach(file => {
+      if (fs.existsSync(file)) filesToBundle.push(file);
+    });
+
+    // Include common Next.js/Frontend assets when present
+    if (fs.existsSync('next.config.js')) filesToBundle.push('next.config.js');
+    if (fs.existsSync('public')) filesToBundle.push('public');
+
+    // Include Dockerfile if it exists or was auto-generated
     if (fs.existsSync(dockerfilePath)) {
       filesToBundle.push('Dockerfile');
     }
+
     await tar.c({ gzip: true, file: bundlePath }, filesToBundle);
 
     if (dockerfileGeneratedAndStackName) {
