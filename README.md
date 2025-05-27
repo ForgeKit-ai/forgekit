@@ -84,6 +84,7 @@ authenticate before deploying.
 
 If a `forgekit.json` file exists it will be used to auto-detect the build directory based on the scaffolded stack.
 The deploy endpoint can be customized with the `FORGEKIT_DEPLOY_URL` environment variable.
+The `projectName` or `slug` value in `forgekit.json` will also be sent as the project slug during deployment.
 
 Example:
 
