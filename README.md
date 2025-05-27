@@ -108,6 +108,12 @@ Any matching variables that exist in your local environment and start with
 time. Runtime-only secrets should still be uploaded separately via
 `forge secrets:set`.
 
+When `forge deploy` executes it will also load environment variables from
+`.env`, `.env.local` and `.env.production` if those files exist. They are read in
+that order so later files override earlier ones, while existing shell variables
+remain untouched. This ensures any detected variables are available for
+injection during the build process.
+
 ## Purpose
 
 ForgeKit aims to streamline bootstrapping modern JavaScript projects by providing a collection of ready‑to‑use stacks with minimal setup hassle.
