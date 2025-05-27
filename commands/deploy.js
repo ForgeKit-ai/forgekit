@@ -58,6 +58,25 @@ export const handler = async (argv = {}) => {
 
   const bundlePath = path.join(process.cwd(), 'bundle.tar.gz');
   const buildDir = detectBuildDir(argv);
+
+  // Determine project slug from forgekit.json
+  let slug;
+  const forgeConfigPath = path.join(process.cwd(), 'forgekit.json');
+  if (!fs.existsSync(forgeConfigPath)) {
+    console.error('❌ Cannot detect project slug—missing forgekit.json in the project root.');
+    return;
+  }
+  try {
+    const forgeConfig = JSON.parse(fs.readFileSync(forgeConfigPath, 'utf-8'));
+    slug = forgeConfig.projectName || forgeConfig.slug;
+    if (!slug) {
+      console.error('❌ Project slug not found in forgekit.json.');
+      return;
+    }
+  } catch (error) {
+    console.error(`❌ Error reading or parsing forgekit.json: ${error.message}`);
+    return;
+  }
   
   let dockerfileGeneratedAndStackName = null; // To store stack name for logging
   const dockerfilePath = path.join(process.cwd(), 'Dockerfile');
@@ -115,6 +134,7 @@ export const handler = async (argv = {}) => {
     console.log('🚀 Uploading bundle...');
     const form = new FormData();
     form.append('bundle', fs.createReadStream(bundlePath));
+    form.append('slug', slug);
     const deployUrl = process.env.FORGEKIT_DEPLOY_URL || 'http://178.156.171.10:3001/deploy_cli';
     const res = await axios.post(deployUrl, form, {
       headers: { ...form.getHeaders(), Authorization: `Bearer ${token}` },
