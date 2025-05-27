@@ -76,22 +76,15 @@ Example config file:
 Run this command to publish your project. It will:
 
 - Build the project.
-- Bundle your build output into `bundle.tar.gz` (defaults to `dist/`, overridable with `--build-dir`).
-- Auto-generate a `.dockerignore` based on your stack so dev-only files stay out of the bundle.
+- Bundle the project root into `bundle.tar.gz`, honoring patterns in `.dockerignore`.
+- Auto-generate a `.dockerignore` based on your stack if one is missing.
 - Upload the archive to ForgeKit hosting.
 
 If you are not logged in, the command will open a browser and prompt you to
 authenticate before deploying.
 
-If a `forgekit.json` file exists it will be used to auto-detect the build directory based on the scaffolded stack.
 The deploy endpoint can be customized with the `FORGEKIT_DEPLOY_URL` environment variable.
-The `projectName` or `slug` value in `forgekit.json` will also be sent as the project slug during deployment.
-
-Example:
-
-```bash
-forge deploy --build-dir .next
-```
+The `projectName` or `slug` value in `forgekit.json` will be sent as the project slug during deployment.
 
 ## `forge secrets:set`
 
