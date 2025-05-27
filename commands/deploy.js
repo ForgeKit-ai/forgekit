@@ -9,18 +9,13 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { ensureLoggedIn } from '../src/auth.js';
 import { generateDockerfile } from '../src/utils/dockerfile.js';
-import { generateDockerignore } from '../src/utils/dockerignore.js';
+import { generateDockerignore, filesFromDockerignore } from '../src/utils/dockerignore.js';
 
 const asyncExec = promisify(exec);
 
 export const command = 'deploy';
 export const describe = 'Build, bundle, and deploy to ForgeKit hosting';
-export const builder = {
-  'build-dir': {
-    type: 'string',
-    describe: 'Directory containing build output',
-  },
-};
+export const builder = {};
 
 function readForgeConfig() {
   const cfgPath = path.join(process.cwd(), 'forgekit.json');
@@ -32,23 +27,6 @@ function readForgeConfig() {
   return {};
 }
 
-function detectBuildDir(argv) {
-  if (argv.buildDir) return argv.buildDir;
-  const cfg = readForgeConfig();
-  if (cfg.buildDir) return cfg.buildDir;
-  const map = {
-    'react-vite': 'dist',
-    'vue-vite': 'dist',
-    'sveltekit': 'build',
-    'nextjs': '.next',
-    'astro': 'dist',
-    'blazor': 'dist',
-    'godot': 'dist',
-  };
-  if (cfg.frontend && map[cfg.frontend]) return map[cfg.frontend];
-  const guesses = ['dist', 'build', '.next', 'out'];
-  return guesses.find(d => fs.existsSync(d)) || 'dist';
-}
 
 export const handler = async (argv = {}) => {
   const token = await ensureLoggedIn();
@@ -58,7 +36,6 @@ export const handler = async (argv = {}) => {
   }
 
   const bundlePath = path.join(process.cwd(), 'bundle.tar.gz');
-  const buildDir = detectBuildDir(argv);
 
   // Determine project slug from forgekit.json
   let slug;
@@ -140,32 +117,9 @@ export const handler = async (argv = {}) => {
     console.log('🏗️ Building project...');
     await asyncExec(buildCmd);
 
-    if (!fs.existsSync(buildDir)) {
-      console.error(`❌ Build directory '${buildDir}' not found. Did you run the build step?`);
-      return;
-    }
-
-    console.log(`📦 Bundling ${buildDir}/ into bundle.tar.gz...`);
-    const filesToBundle = [buildDir];
-
-    // Always include core project metadata files
-    ['package.json', 'package-lock.json', 'yarn.lock'].forEach(file => {
-      if (fs.existsSync(file)) filesToBundle.push(file);
-    });
-
-    // Include common Next.js/Frontend assets when present
-    if (fs.existsSync('next.config.js')) filesToBundle.push('next.config.js');
-    if (fs.existsSync('public')) filesToBundle.push('public');
-
-    // Include Dockerfile if it exists or was auto-generated
-    if (fs.existsSync(dockerfilePath)) {
-      filesToBundle.push('Dockerfile');
-    }
-    if (fs.existsSync(dockerignorePath)) {
-      filesToBundle.push('.dockerignore');
-    }
-
-    await tar.c({ gzip: true, file: bundlePath }, filesToBundle);
+    console.log('📦 Bundling project root into bundle.tar.gz using .dockerignore rules...');
+    const filesToBundle = await filesFromDockerignore(process.cwd());
+    await tar.c({ gzip: true, file: bundlePath, cwd: process.cwd() }, filesToBundle);
 
     if (dockerfileGeneratedAndStackName) {
       console.log(`🛠️ Generating Dockerfile for stack: ${dockerfileGeneratedAndStackName}`);
