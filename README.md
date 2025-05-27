@@ -91,6 +91,19 @@ Example:
 forge deploy --build-dir .next
 ```
 
+## `forge secrets:set`
+
+Upload environment variables for an existing project.
+If the project does not exist on the secrets server, the command will fail
+unless you pass the `--create` flag. The secrets endpoint can be customized
+with the `FORGEKIT_SECRETS_URL` environment variable.
+
+Example:
+
+```bash
+forge secrets:set .env.production --create
+```
+
 ## Purpose
 
 ForgeKit aims to streamline bootstrapping modern JavaScript projects by providing a collection of ready‑to‑use stacks with minimal setup hassle.
