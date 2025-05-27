@@ -10,6 +10,7 @@ import FormData from 'form-data';
 import { ensureLoggedIn } from '../src/auth.js';
 import { generateDockerfile } from '../src/utils/dockerfile.js';
 import { generateDockerignore, filesFromDockerignore } from '../src/utils/dockerignore.js';
+import { detectEnvVars } from '../src/utils/env.js';
 
 const asyncExec = promisify(exec);
 
@@ -61,6 +62,12 @@ export const handler = async (argv = {}) => {
   const dockerfilePath = path.join(process.cwd(), 'Dockerfile');
   const dockerignorePath = path.join(process.cwd(), '.dockerignore');
 
+  const envVarNames = await detectEnvVars(process.cwd());
+  const envPairs = {};
+  for (const name of envVarNames) {
+    envPairs[name] = process.env[name];
+  }
+
   try {
     // Dockerfile generation logic
     if (!fs.existsSync(dockerfilePath)) {
@@ -84,7 +91,7 @@ export const handler = async (argv = {}) => {
         throw new Error('❌ forgekit.json is missing, malformed, or does not contain stack information. Cannot auto-generate Dockerfile.');
       }
 
-      const dockerfileContent = generateDockerfile(stackForDockerfile);
+      const dockerfileContent = generateDockerfile(stackForDockerfile, envVarNames);
       if (dockerfileContent) {
         fs.writeFileSync(dockerfilePath, dockerfileContent);
         dockerfileGeneratedAndStackName = stackForDockerfile; // Store for logging
@@ -129,6 +136,9 @@ export const handler = async (argv = {}) => {
     const form = new FormData();
     form.append('bundle', fs.createReadStream(bundlePath));
     form.append('slug', slug);
+    if (Object.keys(envPairs).length) {
+      form.append('env', JSON.stringify(envPairs));
+    }
     const deployUrl = process.env.FORGEKIT_DEPLOY_URL || 'http://178.156.171.10:3001/deploy_cli';
     const res = await axios.post(deployUrl, form, {
       headers: { ...form.getHeaders(), Authorization: `Bearer ${token}` },

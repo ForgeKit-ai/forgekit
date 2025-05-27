@@ -99,6 +99,15 @@ Example:
 forge secrets:set .env.production --create
 ```
 
+## Environment variables
+
+ForgeKit scans `next.config.js`, `vite.config.ts` and all files in `src/` for
+occurrences of `process.env.VAR` or `import.meta.env.VAR` during `forge deploy`.
+Any matching variables that exist in your local environment and start with
+`VITE_` or `NEXT_PUBLIC_` are sent to the remote builder and injected at build
+time. Runtime-only secrets should still be uploaded separately via
+`forge secrets:set`.
+
 ## Purpose
 
 ForgeKit aims to streamline bootstrapping modern JavaScript projects by providing a collection of ready‑to‑use stacks with minimal setup hassle.
