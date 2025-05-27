@@ -10,10 +10,13 @@ function envAllowed(name) {
 
 export async function detectEnvVars(cwd = process.cwd()) {
   const files = [];
-  const nextPath = path.join(cwd, 'next.config.js');
-  if (fs.existsSync(nextPath)) files.push(nextPath);
-  const vitePath = path.join(cwd, 'vite.config.ts');
-  if (fs.existsSync(vitePath)) files.push(vitePath);
+  const configPatterns = [
+    'next.config.{js,ts,mjs,cjs}',
+    'vite.config.{js,ts,mjs,cjs}',
+  ];
+  const configFiles = await fg(configPatterns, { cwd, absolute: true });
+  files.push(...configFiles);
+
   const srcFiles = await fg(['src/**/*.{js,jsx,ts,tsx}'], { cwd, absolute: true });
   files.push(...srcFiles);
 
@@ -32,5 +35,7 @@ export async function detectEnvVars(cwd = process.cwd()) {
     } catch {}
   }
 
-  return Array.from(vars).filter(v => process.env[v] && envAllowed(v));
+  return Array.from(vars).filter(v =>
+    Object.prototype.hasOwnProperty.call(process.env, v) && envAllowed(v)
+  );
 }
