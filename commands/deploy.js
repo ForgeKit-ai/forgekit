@@ -126,6 +126,14 @@ export const handler = async (argv = {}) => {
       console.error('❌ Deployment failed: unauthorized. Try running `forge login` again.');
     } else {
       console.error('❌ Deployment failed:', err.message || err);
+      if (err.response) {
+        if (err.response.status) {
+          console.error(`HTTP Status: ${err.response.status}`);
+        }
+        if (err.response.data) {
+          console.error('Server response:', err.response.data);
+        }
+      }
     }
   } finally {
     try {
