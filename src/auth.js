@@ -1,40 +1,26 @@
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
 import http from 'http';
 import { exec } from 'child_process';
-
-const CONFIG_DIR = path.join(os.homedir(), '.forgekit');
-const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
+import { tokenManager } from './tokenManager.js';
 
 export function getSavedToken() {
-  if (process.env.FORGEKIT_TOKEN) return process.env.FORGEKIT_TOKEN;
-  try {
-    const data = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
-    const token = data.token;
-    if (!token) return null;
-    const parts = token.split('.');
-    if (parts.length === 3) {
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-      if (!payload.exp || payload.exp * 1000 > Date.now()) {
-        return token;
-      }
-    }
-  } catch {}
-  return null;
+  return tokenManager.getToken();
 }
 
 export async function login() {
-  const loginUrl =
-    'https://forgekit.ai/login?cli=true&callback=http://localhost:3456';
+  // Use environment variables for configuration
+  const loginBaseUrl = process.env.FORGEKIT_LOGIN_URL || 'https://forgekit.ai/login';
+  const callbackPort = process.env.FORGEKIT_CALLBACK_PORT || '3456';
+  const callbackHost = process.env.FORGEKIT_CALLBACK_HOST || 'localhost';
+  const callbackUrl = `http://${callbackHost}:${callbackPort}`;
+  const loginUrl = `${loginBaseUrl}?cli=true&callback=${encodeURIComponent(callbackUrl)}`;
+  
   return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
-      const url = new URL(req.url, 'http://localhost:3456');
+      const url = new URL(req.url, callbackUrl);
       const token = url.searchParams.get('token');
       if (token) {
         try {
-          fs.mkdirSync(CONFIG_DIR, { recursive: true });
-          fs.writeFileSync(CONFIG_PATH, JSON.stringify({ token }, null, 2));
+          tokenManager.saveToken(token);
           res.end('Login successful. You can close this window.');
           console.log('✅ Logged in successfully');
           server.close();
@@ -51,7 +37,7 @@ export async function login() {
       }
     });
 
-    server.listen(3456, () => {
+    server.listen(parseInt(callbackPort), () => {
       console.log('Opening browser for login...');
       const cmd =
         process.platform === 'darwin'

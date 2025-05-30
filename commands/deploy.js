@@ -74,7 +74,7 @@ export const handler = async (argv = {}) => {
     console.log('🚀 Uploading bundle...');
     const form = new FormData();
     form.append('file', fs.createReadStream(bundlePath));
-    const deployUrl = process.env.FORGEKIT_DEPLOY_URL || 'http://178.156.171.10:3001/deploy_cli';
+    const deployUrl = process.env.FORGEKIT_DEPLOY_URL || 'https://api.forgekit.ai/deploy_cli';
     const res = await axios.post(deployUrl, form, {
       headers: { ...form.getHeaders(), Authorization: `Bearer ${token}` },
     });
