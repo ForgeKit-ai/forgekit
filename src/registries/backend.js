@@ -1,4 +1,5 @@
 import { setupExpressBackend } from '../stacks/backend/express.js';
+import { setupNestJS } from '../stacks/backend/nestjs.js';
 import { setupFastAPI } from '../stacks/backend/fastapi.js';
 import { setupFlask } from '../stacks/backend/flask.js';
 import { setupDjango } from '../stacks/backend/django.js';
@@ -8,6 +9,7 @@ import { setupSpringBoot } from '../stacks/backend/spring-boot.js';
 
 export const backendStacks = {
   'express': { setup: setupExpressBackend },
+  'nestjs': { setup: setupNestJS },
   'fastapi': { setup: setupFastAPI },
   'flask': { setup: setupFlask },
   'django': { setup: setupDjango },

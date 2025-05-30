@@ -2,8 +2,10 @@ import path from 'path';
 import fs from 'fs';
 
 export async function setupGodot(config) {
-  const { targetDir, projectName } = config;
-  const frontendDir = path.join(targetDir, 'frontend');
+  const { targetDir, projectName, backend } = config;
+  
+  // If there's a backend, create frontend in a subdirectory; otherwise create directly in targetDir
+  const frontendDir = backend ? path.join(targetDir, 'frontend') : targetDir;
 
   console.log('\n▶️ Creating Godot project directory...');
   fs.mkdirSync(frontendDir, { recursive: true });

@@ -4,13 +4,19 @@ import fs from 'fs';
 import path from 'path';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { drawForgeHammer, setupGit, createProjectStructure, sanitizeProjectName } from '../src/utils.js';
+import { drawForgeHammer, setupGit, createProjectStructure, sanitizeProjectName, setupRootFrontendCoordination } from '../src/utils.js';
 import { spawn } from 'child_process';
 import { scaffoldProject } from '../src/scaffold.js';
 import { frontendOptions, uiOptions, backendOptions, databaseOptions, uiCompatibility, backendCompatibility, dbCompatibility } from '../src/registries/modularOptions.js';
 import { runDoctor } from '../src/doctor.js';
 import * as deployCommand from '../commands/deploy.js';
 import * as loginCommand from '../commands/login.js';
+import * as logoutCommand from '../commands/logout.js';
+import * as whoamiCommand from '../commands/whoami.js';
+import * as listCommand from '../commands/list.js';
+import * as deleteCommand from '../commands/delete.js';
+import * as logsCommand from '../commands/logs.js';
+import * as statsCommand from '../commands/stats.js';
 
 async function main() {
   const projectsBaseDir = process.cwd();
@@ -18,6 +24,12 @@ async function main() {
   const argv = await yargs(hideBin(process.argv))
     .command(deployCommand)
     .command(loginCommand)
+    .command(logoutCommand)
+    .command(whoamiCommand)
+    .command(listCommand)
+    .command(deleteCommand)
+    .command(logsCommand)
+    .command(statsCommand)
     .option('projectName', { type: 'string', description: 'Name of the project to create' })
     .option('frontend', { type: 'string', choices: Object.keys(frontendOptions) })
     .option('ui', { type: 'string', choices: Object.keys(uiOptions) })
@@ -32,7 +44,9 @@ async function main() {
     .wrap(null)
     .parse();
 
-  if (argv._[0] === 'deploy' || argv._[0] === 'login') {
+  // If running a command, don't show the interactive scaffolding
+  const commands = ['deploy', 'login', 'logout', 'whoami', 'list', 'delete', 'logs', 'stats'];
+  if (commands.includes(argv._[0])) {
     return;
   }
 
@@ -106,16 +120,15 @@ async function main() {
     console.log('Proceeding with existing directory...');
   }
 
-  if (options.frontend !== 'nextjs') {
-    createProjectStructure(
-      projectRoot,
-      options.projectName,
-      { frontend: frontendOptions[options.frontend], backend: backendOptions[options.backend] },
-      options.ui,
-      options.database,
-      options.gitInit
-    );
-  }
+  // Always create standardized project structure for all project types
+  createProjectStructure(
+    projectRoot,
+    options.projectName,
+    { frontend: frontendOptions[options.frontend], backend: backendOptions[options.backend] },
+    options.ui,
+    options.database,
+    options.gitInit
+  );
 
   if (options.gitInit) {
     if (!fs.existsSync(projectRoot)) {
@@ -140,21 +153,74 @@ async function main() {
   try {
     await scaffoldProject(config);
 
+    // Set up root package.json coordination for frontend-only projects
+    if (!options.backend) {
+      setupRootFrontendCoordination(projectRoot, options.frontend);
+    }
+
     const buildDirMap = {
       'react-vite': 'dist',
       'vue-vite': 'dist',
       'sveltekit': 'build',
       'nextjs': '.next',
       'astro': 'dist',
-      'blazor': 'dist',
-      'godot': 'dist'
+      'angular': 'dist'
     };
+
+    // Detect framework output type for deployment optimization
+    const outputTypeMap = {
+      'react-vite': 'static',
+      'vue-vite': 'static', 
+      'sveltekit': 'static',
+      'nextjs': 'hybrid', // Can be static or SSR
+      'astro': 'static',
+      'angular': 'static'
+    };
+
+    // Detect default port for backend frameworks
+    const portMap = {
+      'express': 3000,
+      'nestjs': 3000,
+      'fastapi': 8000,
+      'flask': 5000,
+      'django': 8000,
+      'rails': 3000,
+      'gofiber': 3000,
+      'spring-boot': 8080
+    };
+
+    // Enhanced forgekit.json with production metadata
     const forgeCfg = {
-      frontend: options.frontend,
-      backend: options.backend,
-      ui: options.ui,
-      database: options.database,
-      buildDir: buildDirMap[options.frontend] || 'dist'
+      version: '2.0',
+      project: {
+        name: options.projectName,
+        type: options.backend ? 'fullstack' : 'frontend',
+        created: new Date().toISOString()
+      },
+      stack: {
+        frontend: options.frontend,
+        backend: options.backend,
+        ui: options.ui,
+        database: options.database
+      },
+      build: {
+        buildDir: buildDirMap[options.frontend] || 'dist',
+        buildScript: 'build',
+        buildEnv: 'production',
+        outputType: outputTypeMap[options.frontend] || 'static'
+      },
+      deployment: {
+        type: options.backend ? 'container' : 'static',
+        healthCheck: options.backend ? '/health' : null,
+        port: options.backend ? portMap[options.backend] || 3000 : null,
+        environment: 'production'
+      },
+      optimization: {
+        minify: true,
+        treeshake: true,
+        bundleAnalysis: false, // Can be enabled per project
+        compressionEnabled: true
+      }
     };
     fs.writeFileSync(path.join(projectRoot, 'forgekit.json'), JSON.stringify(forgeCfg, null, 2));
     console.log('↳ Created forgekit.json');

@@ -4,11 +4,15 @@ import shell from 'shelljs';
 import { setupSupabase, setupUIFramework } from '../../utils.js';
 
 export async function setupVueVite(config) {
-  const { targetDir, projectName, ui } = config;
-  const frontendDir = path.join(targetDir, 'frontend');
+  const { targetDir, projectName, ui, backend } = config;
+  
+  // If there's a backend, create frontend in a subdirectory; otherwise create directly in targetDir
+  const frontendDir = backend ? path.join(targetDir, 'frontend') : targetDir;
+  const createCommand = backend ? 'npm create vite@latest frontend -- --template vue-ts' : 'npm create vite@latest . -- --template vue-ts';
+  const parentDir = backend ? targetDir : path.dirname(targetDir);
 
   console.log('\n▶️ Creating frontend with Vite (Vue + TS)...');
-  let result = shell.exec(`npm create vite@latest frontend -- --template vue-ts`, { cwd: targetDir, silent: true });
+  let result = shell.exec(createCommand, { cwd: parentDir, silent: true });
   if (!result || result.code !== 0) throw new Error(`Failed to create Vite project in ${frontendDir}: ${result.stderr || result.stdout}`);
 
   try { fs.rmSync(path.join(frontendDir, '.gitignore'), { force: true }); } catch {}
@@ -17,6 +21,22 @@ export async function setupVueVite(config) {
   console.log('  Installing frontend dependencies...');
   result = shell.exec('npm install', { cwd: frontendDir, silent: true });
   if (result.code !== 0) throw new Error(`Failed to install frontend dependencies in ${frontendDir}: ${result.stderr || result.stdout}`);
+
+  // Verify and ensure build script exists
+  console.log('  Verifying build configuration...');
+  const pkgJsonPath = path.join(frontendDir, 'package.json');
+  if (fs.existsSync(pkgJsonPath)) {
+    const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
+    if (!pkg.scripts || !pkg.scripts.build) {
+      pkg.scripts = pkg.scripts || {};
+      pkg.scripts.build = 'vite build';
+      pkg.scripts.preview = 'vite preview';
+      fs.writeFileSync(pkgJsonPath, JSON.stringify(pkg, null, 2));
+      console.log('  ↳ Added missing build script to package.json');
+    } else {
+      console.log('  ↳ Build script verified in package.json');
+    }
+  }
 
   const appVuePath = path.join(frontendDir, 'src', 'App.vue');
   const mainTsPath = path.join(frontendDir, 'src', 'main.ts');
@@ -46,6 +66,38 @@ export async function setupVueVite(config) {
         `app.mount('#app');\n`;
     }
     fs.writeFileSync(mainTsPath, mainContent);
+  }
+
+  // Configure Vite for production optimization
+  console.log('  Configuring Vite for production...');
+  const viteConfigPath = path.join(frontendDir, 'vite.config.ts');
+  if (fs.existsSync(viteConfigPath)) {
+    const productionConfig = `import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [vue()],
+  build: {
+    minify: 'terser',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['vue'],
+        },
+      },
+    },
+  },
+  server: {
+    port: 3000,
+  },
+  preview: {
+    port: 3000,
+  },
+})`;
+    fs.writeFileSync(viteConfigPath, productionConfig);
+    console.log('  ↳ Configured Vite for optimized builds');
   }
 
   if (config.database === 'supabase') {

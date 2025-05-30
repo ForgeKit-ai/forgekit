@@ -238,6 +238,46 @@ export async function setupUIFramework(targetDir, uiFramework, stackType) {
     } else if (stackType === 'nextjs') {
         console.log(`   Action needed: Import and wrap content in 'src/app/layout.tsx' with '<ChakraProvider>'`);
     }
+  } else if (uiFramework === "Material") {
+    if (stackType === 'angular') {
+      // Angular Material
+      const installCmd = `${pkgManager} install @angular/material @angular/cdk @angular/animations`;
+      console.log(`  Running: ${installCmd} in ${targetDir}`);
+      let result = shell.exec(installCmd, { cwd: targetDir, silent: true });
+      checkCommand(result, `Failed to install Angular Material dependencies in ${targetDir}`);
+
+      // Add Angular Material theme
+      const stylesPath = path.join(targetDir, 'src', 'styles.scss');
+      if (fs.existsSync(stylesPath)) {
+        const materialStyles = `@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+/* You can add global styles to this file, and also import other style files */
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }`;
+        fs.writeFileSync(stylesPath, materialStyles);
+        console.log(`↳ Added Angular Material theme to styles.scss`);
+      }
+      
+      console.log(`↳ Installed Angular Material dependencies.`);
+    } else {
+      // Material-UI for React/Next.js
+      const installCmd = `${pkgManager} install @mui/material @emotion/react @emotion/styled @mui/icons-material`;
+      console.log(`  Running: ${installCmd} in ${targetDir}`);
+      let result = shell.exec(installCmd, { cwd: targetDir, silent: true });
+      checkCommand(result, `Failed to install Material-UI dependencies in ${targetDir}`);
+
+      console.log(`↳ Installed Material-UI dependencies.`);
+      if (stackType === 'vite') {
+          console.log(`   Action needed: Configure Material-UI theme provider in your app`);
+      } else if (stackType === 'nextjs') {
+          console.log(`   Action needed: Configure Material-UI theme provider in your layout`);
+      }
+    }
+  } else if (uiFramework === "shadcn") {
+    // Import and call shadcn/ui setup function
+    const { setupShadcnUI } = await import('./ui/shadcn.js');
+    const projectName = path.basename(targetDir);
+    await setupShadcnUI(targetDir, projectName);
   }
 }
 
@@ -273,4 +313,383 @@ export function setupRootConcurrentDev(projectRoot) {
 
   fs.writeFileSync(rootPkgJsonPath, JSON.stringify(rootPkg, null, 2));
   console.log(`↳ Added "dev" script to root package.json: runs frontend & backend concurrently.`);
+}
+
+export function setupRootFrontendCoordination(projectRoot, frontend) {
+  const rootPkgJsonPath = path.join(projectRoot, 'package.json');
+  if (!fs.existsSync(rootPkgJsonPath)) {
+    let initResult = shell.exec("npm init -y", { cwd: projectRoot, silent: true});
+    checkCommand(initResult, "Failed to create a root package.json");
+  }
+
+  const rootPkg = JSON.parse(fs.readFileSync(rootPkgJsonPath, 'utf-8'));
+  if (!rootPkg.scripts) {
+    rootPkg.scripts = {};
+  }
+
+  // Add deployment-ready scripts for frontend-only projects
+  const scriptMap = {
+    'react-vite': { build: 'vite build', dev: 'vite', preview: 'vite preview' },
+    'vue-vite': { build: 'vite build', dev: 'vite', preview: 'vite preview' },
+    'sveltekit': { build: 'vite build', dev: 'vite dev', preview: 'vite preview' },
+    'astro': { build: 'astro build', dev: 'astro dev', preview: 'astro preview' },
+    'nextjs': { build: 'next build', dev: 'next dev', start: 'next start' },
+    'angular': { build: 'ng build --configuration production', dev: 'ng serve', start: 'ng serve --configuration production' }
+  };
+
+  const scripts = scriptMap[frontend] || { build: 'npm run build', dev: 'npm run dev' };
+  rootPkg.scripts.build = scripts.build;
+  rootPkg.scripts.dev = scripts.dev;
+  if (scripts.start) rootPkg.scripts.start = scripts.start;
+  if (scripts.preview) rootPkg.scripts.preview = scripts.preview;
+
+  fs.writeFileSync(rootPkgJsonPath, JSON.stringify(rootPkg, null, 2));
+  console.log(`↳ Added deployment scripts to root package.json for ${frontend}.`);
+}
+
+export async function validateDeployReadiness(projectRoot, verbose = false) {
+  const validationResults = {
+    valid: true,
+    errors: [],
+    warnings: [],
+    info: []
+  };
+
+  function logVerbose(message) {
+    if (verbose) console.log(`  ${message}`);
+  }
+
+  function addError(message) {
+    validationResults.errors.push(message);
+    validationResults.valid = false;
+  }
+
+  function addWarning(message) {
+    validationResults.warnings.push(message);
+  }
+
+  function addInfo(message) {
+    validationResults.info.push(message);
+  }
+
+  logVerbose('🔍 Starting deployment readiness validation...');
+
+  // 1. Check forgekit.json exists and is valid
+  const forgeConfigPath = path.join(projectRoot, 'forgekit.json');
+  if (!fs.existsSync(forgeConfigPath)) {
+    addError('forgekit.json not found. This project may not be a ForgeKit project.');
+    return validationResults;
+  }
+
+  let config;
+  try {
+    config = JSON.parse(fs.readFileSync(forgeConfigPath, 'utf-8'));
+    logVerbose('✓ forgekit.json found and parsed successfully');
+  } catch (error) {
+    addError(`forgekit.json is invalid JSON: ${error.message}`);
+    return validationResults;
+  }
+
+  // 2. Validate package.json exists and has build script
+  const rootPkgPath = path.join(projectRoot, 'package.json');
+  if (!fs.existsSync(rootPkgPath)) {
+    addError('package.json not found in project root');
+  } else {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(rootPkgPath, 'utf-8'));
+      if (!pkg.scripts?.build) {
+        addError('package.json missing "build" script required for deployment');
+      } else {
+        logVerbose('✓ package.json has build script');
+        addInfo(`Build command: ${pkg.scripts.build}`);
+      }
+    } catch (error) {
+      addError(`package.json is invalid JSON: ${error.message}`);
+    }
+  }
+
+  // 3. Check build directory configuration
+  const buildDir = config.build?.buildDir || config.buildDir || 'dist';
+  const buildDirPath = path.join(projectRoot, buildDir);
+  
+  if (fs.existsSync(buildDirPath)) {
+    logVerbose(`✓ Build directory exists: ${buildDir}`);
+    
+    // Check if build directory has content
+    const buildContents = fs.readdirSync(buildDirPath);
+    if (buildContents.length === 0) {
+      addWarning(`Build directory ${buildDir} is empty. Run build first or use --skip-build flag.`);
+    } else {
+      addInfo(`Build directory contains ${buildContents.length} items`);
+    }
+  } else {
+    addWarning(`Build directory ${buildDir} doesn't exist. Will be created during build.`);
+  }
+
+  // 4. Validate framework-specific requirements
+  const frontend = config.stack?.frontend || config.frontend;
+  const backend = config.stack?.backend || config.backend;
+
+  if (frontend) {
+    logVerbose(`Validating frontend: ${frontend}`);
+    
+    // Check for framework-specific files
+    const frameworkFiles = {
+      'nextjs': ['next.config.ts', 'next.config.js'],
+      'react-vite': ['vite.config.ts', 'vite.config.js'],
+      'vue-vite': ['vite.config.ts', 'vite.config.js'],
+      'sveltekit': ['svelte.config.js'],
+      'astro': ['astro.config.mjs', 'astro.config.js'],
+      'angular': ['angular.json']
+    };
+
+    const expectedFiles = frameworkFiles[frontend];
+    if (expectedFiles) {
+      const hasConfigFile = expectedFiles.some(file => fs.existsSync(path.join(projectRoot, file)));
+      if (!hasConfigFile) {
+        addWarning(`No ${frontend} config file found. Expected one of: ${expectedFiles.join(', ')}`);
+      } else {
+        logVerbose(`✓ ${frontend} config file found`);
+      }
+    }
+  }
+
+  if (backend) {
+    logVerbose(`Validating backend: ${backend}`);
+    
+    const backendDir = path.join(projectRoot, 'backend');
+    if (!fs.existsSync(backendDir)) {
+      addError('Backend directory not found');
+    } else {
+      // Check backend package.json
+      const backendPkgPath = path.join(backendDir, 'package.json');
+      if (!fs.existsSync(backendPkgPath)) {
+        addError('Backend package.json not found');
+      } else {
+        try {
+          const backendPkg = JSON.parse(fs.readFileSync(backendPkgPath, 'utf-8'));
+          if (!backendPkg.scripts?.start) {
+            addError('Backend package.json missing "start" script');
+          } else {
+            logVerbose('✓ Backend has start script');
+          }
+        } catch (error) {
+          addError(`Backend package.json is invalid: ${error.message}`);
+        }
+      }
+    }
+  }
+
+  // 5. Check for environment variables if needed
+  const envFiles = ['.env', '.env.local', '.env.production'];
+  const foundEnvFiles = envFiles.filter(file => fs.existsSync(path.join(projectRoot, file)));
+  if (foundEnvFiles.length > 0) {
+    addInfo(`Environment files found: ${foundEnvFiles.join(', ')}`);
+  }
+
+  // 6. Check for security issues
+  const sensitiveFiles = ['.env', '.env.local', '.env.production'];
+  const gitignorePath = path.join(projectRoot, '.gitignore');
+  if (fs.existsSync(gitignorePath)) {
+    const gitignore = fs.readFileSync(gitignorePath, 'utf-8');
+    const unprotectedSensitiveFiles = sensitiveFiles.filter(file => 
+      fs.existsSync(path.join(projectRoot, file)) && !gitignore.includes(file)
+    );
+    if (unprotectedSensitiveFiles.length > 0) {
+      addWarning(`Sensitive files not in .gitignore: ${unprotectedSensitiveFiles.join(', ')}`);
+    }
+  }
+
+  logVerbose(`🏁 Validation complete: ${validationResults.valid ? 'PASS' : 'FAIL'}`);
+  
+  return validationResults;
+}
+
+export async function verifyBuildOutput(projectRoot, buildDir, verbose = false) {
+  const verificationResults = {
+    valid: true,
+    errors: [],
+    warnings: [],
+    info: []
+  };
+
+  function logVerbose(message) {
+    if (verbose) console.log(`  ${message}`);
+  }
+
+  function addError(message) {
+    verificationResults.errors.push(message);
+    verificationResults.valid = false;
+  }
+
+  function addWarning(message) {
+    verificationResults.warnings.push(message);
+  }
+
+  function addInfo(message) {
+    verificationResults.info.push(message);
+  }
+
+  logVerbose('🔍 Verifying build output...');
+
+  const buildPath = path.join(projectRoot, buildDir);
+  
+  // 1. Check if build directory exists
+  if (!fs.existsSync(buildPath)) {
+    addError(`Build directory '${buildDir}' does not exist`);
+    return verificationResults;
+  }
+
+  // 2. Check if build directory has content
+  const buildContents = fs.readdirSync(buildPath);
+  if (buildContents.length === 0) {
+    addError(`Build directory '${buildDir}' is empty`);
+    return verificationResults;
+  }
+
+  logVerbose(`✓ Build directory contains ${buildContents.length} items`);
+
+  // 3. Check for common required files based on project type
+  const forgeConfigPath = path.join(projectRoot, 'forgekit.json');
+  if (fs.existsSync(forgeConfigPath)) {
+    try {
+      const config = JSON.parse(fs.readFileSync(forgeConfigPath, 'utf-8'));
+      const frontend = config.stack?.frontend || config.frontend;
+      
+      switch (frontend) {
+        case 'nextjs':
+          // Next.js specific checks
+          if (fs.existsSync(path.join(buildPath, 'standalone'))) {
+            addInfo('Next.js standalone build detected');
+          } else if (fs.existsSync(path.join(buildPath, 'static'))) {
+            addInfo('Next.js static build detected');
+          } else {
+            addWarning('Next.js build output structure not recognized');
+          }
+          break;
+          
+        case 'react-vite':
+        case 'vue-vite':
+          // Vite builds should have an index.html
+          if (fs.existsSync(path.join(buildPath, 'index.html'))) {
+            addInfo('Static index.html found');
+          } else {
+            addWarning('No index.html found in build output');
+          }
+          
+          // Check for assets directory
+          if (fs.existsSync(path.join(buildPath, 'assets'))) {
+            const assets = fs.readdirSync(path.join(buildPath, 'assets'));
+            addInfo(`Found ${assets.length} asset files`);
+          }
+          break;
+          
+        case 'sveltekit':
+          // SvelteKit static build should have prerendered content
+          if (fs.existsSync(path.join(buildPath, 'index.html'))) {
+            addInfo('SvelteKit static build detected');
+          } else {
+            addWarning('SvelteKit build output may not be static');
+          }
+          break;
+          
+        case 'astro':
+          // Astro builds should have an index.html
+          if (fs.existsSync(path.join(buildPath, 'index.html'))) {
+            addInfo('Astro static build detected');
+          } else {
+            addWarning('No index.html found in Astro build');
+          }
+          break;
+          
+        case 'angular':
+          // Angular builds should have an index.html
+          if (fs.existsSync(path.join(buildPath, 'index.html'))) {
+            addInfo('Angular static build detected');
+          } else {
+            addWarning('No index.html found in Angular build');
+          }
+          
+          // Check for Angular build artifacts
+          if (fs.existsSync(path.join(buildPath, 'main.js')) || fs.existsSync(path.join(buildPath, 'main.*.js'))) {
+            addInfo('Angular bundled files detected');
+          }
+          break;
+      }
+    } catch (error) {
+      addWarning('Could not read forgekit.json for build verification');
+    }
+  }
+
+  // 4. Check total build size
+  const getBuildSize = (dirPath) => {
+    let totalSize = 0;
+    const files = fs.readdirSync(dirPath);
+    
+    for (const file of files) {
+      const filePath = path.join(dirPath, file);
+      const stats = fs.statSync(filePath);
+      
+      if (stats.isDirectory()) {
+        totalSize += getBuildSize(filePath);
+      } else {
+        totalSize += stats.size;
+      }
+    }
+    
+    return totalSize;
+  };
+
+  try {
+    const buildSize = getBuildSize(buildPath);
+    const buildSizeMB = (buildSize / 1024 / 1024).toFixed(2);
+    addInfo(`Total build size: ${buildSizeMB} MB`);
+    
+    if (buildSize > 100 * 1024 * 1024) { // 100MB
+      addWarning(`Large build size (${buildSizeMB} MB). Consider optimizing your build.`);
+    }
+    
+    if (buildSize > 500 * 1024 * 1024) { // 500MB
+      addError(`Build size (${buildSizeMB} MB) exceeds deployment limits. Please optimize your build.`);
+    }
+  } catch (error) {
+    addWarning('Could not calculate build size');
+  }
+
+  // 5. Check for common issues
+  const commonIssues = [
+    { pattern: /node_modules/, message: 'Build contains node_modules directory - this should not be deployed' },
+    { pattern: /\.env$/, message: 'Build contains .env files - ensure secrets are not included' },
+    { pattern: /\.log$/, message: 'Build contains log files - consider excluding these' },
+  ];
+
+  const checkForIssues = (dirPath, relativePath = '') => {
+    const files = fs.readdirSync(dirPath);
+    
+    for (const file of files) {
+      const filePath = path.join(dirPath, file);
+      const relativeFilePath = path.join(relativePath, file);
+      const stats = fs.statSync(filePath);
+      
+      for (const issue of commonIssues) {
+        if (issue.pattern.test(relativeFilePath)) {
+          addWarning(`${issue.message}: ${relativeFilePath}`);
+        }
+      }
+      
+      if (stats.isDirectory() && !file.startsWith('.')) {
+        checkForIssues(filePath, relativeFilePath);
+      }
+    }
+  };
+
+  try {
+    checkForIssues(buildPath);
+  } catch (error) {
+    addWarning('Could not scan build output for common issues');
+  }
+
+  logVerbose(`🏁 Build verification complete: ${verificationResults.valid ? 'PASS' : 'FAIL'}`);
+  
+  return verificationResults;
 }

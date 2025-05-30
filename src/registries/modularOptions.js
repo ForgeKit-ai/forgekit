@@ -4,18 +4,20 @@ export const frontendOptions = {
   'vue-vite': 'Vue (Vite)',
   'sveltekit': 'SvelteKit',
   'astro': 'Astro',
-  'blazor': 'Blazor',
-  'godot': 'Godot'
+  'angular': 'Angular'
 };
 
 export const uiOptions = {
   'Tailwind': 'Tailwind CSS',
   'Chakra': 'Chakra UI',
+  'Material': 'Material-UI / Angular Material',
+  'shadcn': 'shadcn/ui',
   'None': 'None'
 };
 
 export const backendOptions = {
   'express': 'Express (Node.js)',
+  'nestjs': 'NestJS (Node.js)',
   'fastapi': 'FastAPI (Python)',
   'flask': 'Flask (Python)',
   'django': 'Django (Python)',
@@ -34,27 +36,26 @@ export const databaseOptions = {
 };
 
 export const uiCompatibility = {
-  'react-vite': ['Tailwind', 'Chakra', 'None'],
-  'nextjs': ['Tailwind', 'Chakra', 'None'],
+  'react-vite': ['Tailwind', 'Chakra', 'Material', 'shadcn', 'None'],
+  'nextjs': ['Tailwind', 'Chakra', 'Material', 'shadcn', 'None'],
   'vue-vite': ['Tailwind', 'None'],
   'sveltekit': ['Tailwind', 'None'],
   'astro': ['Tailwind', 'None'],
-  'blazor': ['None'],
-  'godot': ['None']
+  'angular': ['Tailwind', 'Material', 'None']
 };
 
 export const backendCompatibility = {
-  'react-vite': ['express', 'spring-boot'],
+  'react-vite': ['express', 'nestjs', 'fastapi', 'flask', 'django', 'rails', 'spring-boot', null],
   'nextjs': [null],
-  'vue-vite': ['express', 'fastapi'],
-  'sveltekit': ['flask', 'express'],
-  'astro': ['django'],
-  'blazor': ['rails'],
-  'godot': ['gofiber']
+  'vue-vite': ['express', 'nestjs', 'fastapi', 'flask', 'django', 'rails', 'spring-boot', null],
+  'sveltekit': ['express', 'nestjs', 'fastapi', 'flask', 'django', 'rails', 'spring-boot', null],
+  'astro': ['express', 'nestjs', 'fastapi', 'flask', 'django', 'rails', 'spring-boot', null],
+  'angular': ['express', 'nestjs', 'fastapi', 'flask', 'django', 'rails', 'spring-boot', null]
 };
 
 export const dbCompatibility = {
   'express': ['supabase', 'postgresql', 'sqlite', 'mongodb'],
+  'nestjs': ['supabase', 'postgresql', 'sqlite', 'mongodb'],
   'fastapi': ['supabase', 'postgresql', 'sqlite'],
   'flask': ['supabase', 'postgresql', 'sqlite'],
   'django': ['postgresql', 'sqlite'],

@@ -3,8 +3,7 @@ import { setupNextJS } from '../stacks/frontend/nextjs.js';
 import { setupVueVite } from '../stacks/frontend/vue-vite.js';
 import { setupSvelteKit } from '../stacks/frontend/sveltekit.js';
 import { setupAstro } from '../stacks/frontend/astro.js';
-import { setupBlazor } from '../stacks/frontend/blazor.js';
-import { setupGodot } from '../stacks/frontend/godot.js';
+import { setupAngular } from '../stacks/frontend/angular.js';
 
 export const frontendStacks = {
   'react-vite': { setup: setupReactVite },
@@ -12,6 +11,5 @@ export const frontendStacks = {
   'vue-vite': { setup: setupVueVite },
   'sveltekit': { setup: setupSvelteKit },
   'astro': { setup: setupAstro },
-  'blazor': { setup: setupBlazor },
-  'godot': { setup: setupGodot }
+  'angular': { setup: setupAngular }
 };

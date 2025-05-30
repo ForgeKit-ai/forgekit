@@ -29,6 +29,28 @@ export async function setupNextJS(config) {
   console.log("\n📝 Adding DevForge structure files...");
   createProjectStructure(targetDir, projectName, stackLabel, ui, config.database, config.gitInit);
 
+  // Configure Next.js for production deployment
+  console.log("\n⚙️ Configuring Next.js for production...");
+  const nextConfigPath = path.join(targetDir, 'next.config.ts');
+  if (fs.existsSync(nextConfigPath)) {
+    const productionConfig = `import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+  output: 'standalone',
+  experimental: {
+    optimizePackageImports: ['lucide-react']
+  },
+  compress: true,
+  poweredByHeader: false,
+  reactStrictMode: true
+};
+
+export default nextConfig;`;
+    fs.writeFileSync(nextConfigPath, productionConfig);
+    console.log('↳ Configured Next.js for standalone deployment');
+  }
+
   if (config.database === 'supabase') {
     await setupSupabase(targetDir, 'NEXT_PUBLIC');
   }
@@ -45,6 +67,37 @@ export async function setupNextJS(config) {
             console.warn('⚠️ Remember to wrap src/app/layout.tsx with <ChakraProvider> for Chakra.');
             fs.writeFileSync(pageTsxPath, pageContent);
             console.log(`↳ Updated src/app/page.tsx for Chakra example.`);
+          } else if (ui === 'shadcn') {
+            pageContent = `'use client';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+export default function Home() {
+  const [count, setCount] = useState(0);
+  
+  return (
+    <main className="container mx-auto p-8">
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold">${projectName}</CardTitle>
+          <CardDescription>Next.js + shadcn/ui</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            Edit <code className="bg-muted px-2 py-1 rounded">src/app/page.tsx</code> and save to test HMR
+          </p>
+          <Button onClick={() => setCount(count + 1)} variant="default">
+            Count: {count}
+          </Button>
+        </CardContent>
+      </Card>
+    </main>
+  );
+}`;
+            fs.writeFileSync(pageTsxPath, pageContent);
+            console.log(`↳ Updated src/app/page.tsx for shadcn/ui example.`);
           } else if (pageContent.includes('<main')) {
               pageContent = pageContent.replace(
                 /(<main.*?>)/,
