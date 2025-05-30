@@ -12,6 +12,8 @@ import { runDoctor } from '../src/doctor.js';
 import * as deployCommand from '../commands/deploy.js';
 import * as loginCommand from '../commands/login.js';
 import * as secretsSetCommand from '../commands/secrets-set.js';
+import * as buildCommand from '../commands/build.js';
+import * as deploymentsListCommand from '../commands/deployments-list.js';
 
 async function main() {
   const projectsBaseDir = process.cwd();
@@ -20,6 +22,8 @@ async function main() {
     .command(deployCommand)
     .command(loginCommand)
     .command(secretsSetCommand)
+    .command(buildCommand)
+    .command(deploymentsListCommand)
     .option('projectName', { type: 'string', description: 'Name of the project to create' })
     .option('frontend', { type: 'string', choices: Object.keys(frontendOptions) })
     .option('ui', { type: 'string', choices: Object.keys(uiOptions) })
@@ -34,7 +38,7 @@ async function main() {
     .wrap(null)
     .parse();
 
-  if (argv._[0] === 'deploy' || argv._[0] === 'login' || argv._[0] === 'secrets:set') {
+  if (argv._[0] === 'deploy' || argv._[0] === 'login' || argv._[0] === 'secrets:set' || argv._[0] === 'build' || argv._[0] === 'deployments:list') {
     return;
   }
 

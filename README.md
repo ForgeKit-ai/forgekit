@@ -1,6 +1,6 @@
 # ForgeKit
 
-ForgeKit is a modular scaffolding tool that helps you spin up full‑stack projects with your choice of frontend, backend and UI frameworks. It creates the initial directory structure, initializes Git and installs required dependencies so you can start coding right away.
+ForgeKit is a modular full-stack scaffolding and hosting platform that helps you build and deploy modern web applications. Create projects with your choice of frontend, backend and UI frameworks, then deploy them to production with a single command.
 
 ## Prerequisites
 
@@ -57,66 +57,189 @@ You can verify your environment at any time with the built in doctor command:
 forge --doctor
 ```
 
-## `forge login`
+## Commands
 
-Run this command to authenticate the CLI with your ForgeKit account. Your web
-browser will open to complete the login flow and the received token will be
-stored in `~/.forgekit/config.json`.
+ForgeKit provides several commands for project management and deployment:
 
-Example config file:
+### `forge login`
+
+Authenticate the CLI with your ForgeKit account. Opens your web browser to complete the login flow and stores authentication credentials locally.
+
+**What it stores:**
+- Session token for API authentication  
+- User ID (full UUID from Supabase)
+- Safe User ID (first 8 alphanumeric characters for container naming)
+
+Example `~/.forgekit/config.json`:
 
 ```json
 {
-  "token": "USER_JWT"
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "userId": "c87df195-2d1f-493e-8093-2fc5b5a52a5e",
+  "safeUserId": "c87df195"
 }
 ```
 
-## `forge deploy`
+### `forge build`
 
-Run this command to publish your project. It will:
+Build your project and create a deployment bundle without deploying. This command:
 
-- Build the project.
-- Bundle the project root into `bundle.tar.gz`, honoring patterns in `.dockerignore`.
-- Auto-generate a `.dockerignore` based on your stack if one is missing.
-- Upload the archive to ForgeKit hosting.
+- Auto-detects your project stack (Next.js, Vite, SvelteKit, etc.)
+- Runs the appropriate build command (`npm run build`, `yarn build`, etc.)
+- Creates a `bundle.tar.gz` file in the `.forgekit/` directory
+- Validates bundle contents to ensure deployment compatibility
 
-If you are not logged in, the command will open a browser and prompt you to
-authenticate before deploying.
+**Supported stacks:**
+- Next.js (`next build`)
+- React/Vue/Svelte with Vite (`vite build`) 
+- SvelteKit (`svelte-kit build`)
+- Astro (`astro build`)
+- Blazor (`dotnet publish`)
+- Godot (`godot --export-release`)
 
-The deploy endpoint can be customized with the `FORGEKIT_DEPLOY_URL` environment variable.
-The `projectName` or `slug` value in `forgekit.json` will be sent as the project slug during deployment.
+```bash
+forge build
+```
 
-## `forge secrets:set`
+### `forge deployments:list`
 
-Upload environment variables for an existing project.
-If the project does not exist on the secrets server, the command will fail
-unless you pass the `--create` flag. The secrets endpoint can be customized
-with the `FORGEKIT_SECRETS_URL` environment variable.
+View all your deployed projects with their current status and URLs.
 
-Example:
+```bash
+forge deployments:list
+```
 
+**Sample output:**
+```
+📦 Deployed Projects:
+──────────────────────────────────────────────────────────────
+🟢  acme-site           8jezdu.forgekit.ai       May 29 2025
+🟡  docs-landing        3n04fv.forgekit.ai       May 22 2025
+
+Total deployments: 2
+```
+
+**Status indicators:**
+- 🟢 Active/deployed
+- 🟡 Building/pending  
+- 🔴 Failed/error
+
+### `forge deploy`
+
+Build and deploy your project to ForgeKit hosting. This command:
+
+- **Auto-generates `forgekit.json`** if missing (prompts for project name and slug)
+- Builds the project using the appropriate build command
+- Bundles the project root into `bundle.tar.gz` (respects `.dockerignore`)
+- Auto-generates `.dockerignore` and `Dockerfile` if missing
+- Uploads and deploys to ForgeKit hosting
+
+**Project Configuration:**
+
+Before first deploy, you'll be prompted to create a `forgekit.json` file:
+
+```json
+{
+  "userId": "c87df195-2d1f-493e-8093-2fc5b5a52a5e",
+  "safeUserId": "c87df195",
+  "slug": "my-awesome-app", 
+  "projectName": "My Awesome App"
+}
+```
+
+- **userId**: Full UUID for API authentication
+- **safeUserId**: 8-character safe ID for container naming (`forgekit-c87df195-my-awesome-app`)
+- **slug**: URL-safe project identifier  
+- **projectName**: Human-readable project name
+
+**Environment Variables:**
+The deploy command automatically detects and injects build-time environment variables that match:
+- `VITE_*` (for Vite projects)
+- `NEXT_PUBLIC_*` (for Next.js projects)
+
+```bash
+forge deploy
+```
+
+### `forge secrets:set`
+
+Upload runtime environment variables for an existing deployed project. These are separate from build-time variables and are securely injected at runtime.
+
+**Usage:**
 ```bash
 forge secrets:set .env.production --create
 ```
 
-## Environment variables
+**Options:**
+- `--create`: Create the project on the secrets server if it doesn't exist
+- Custom endpoint via `FORGEKIT_SECRETS_URL` environment variable
 
-ForgeKit scans `next.config.{js,ts,mjs,cjs}`, `vite.config.{js,ts,mjs,cjs}` and all files in `src/` for
-occurrences of `process.env.VAR` or `import.meta.env.VAR` during `forge deploy`.
-Any matching variables that exist in your local environment and start with
-`VITE_` or `NEXT_PUBLIC_` are sent to the remote builder and injected at build
-time. Runtime-only secrets should still be uploaded separately via
-`forge secrets:set`.
+## Environment Variables
 
-When `forge deploy` executes it will also load environment variables from
-`.env`, `.env.local` and `.env.production` if those files exist. They are read in
-that order so later files override earlier ones, while existing shell variables
-remain untouched. This ensures any detected variables are available for
-injection during the build process.
+ForgeKit handles environment variables in two ways:
 
-## Purpose
+### Build-time Variables (Automatic)
+During `forge deploy`, ForgeKit automatically:
 
-ForgeKit aims to streamline bootstrapping modern JavaScript projects by providing a collection of ready‑to‑use stacks with minimal setup hassle.
+1. **Scans your code** for `process.env.VAR` or `import.meta.env.VAR` usage in:
+   - `next.config.{js,ts,mjs,cjs}` 
+   - `vite.config.{js,ts,mjs,cjs}`
+   - All files in `src/`
+
+2. **Detects public variables** that start with:
+   - `VITE_*` (for Vite projects)
+   - `NEXT_PUBLIC_*` (for Next.js projects)
+
+3. **Auto-loads from files** in this order (later files override earlier ones):
+   - `.env`
+   - `.env.local`  
+   - `.env.production`
+
+4. **Injects at build time** during remote deployment
+
+### Runtime Variables (Manual)
+Use `forge secrets:set` for sensitive environment variables that should only be available at runtime, not embedded in the build.
+
+## Typical Workflow
+
+1. **Create a new project:**
+   ```bash
+   forge
+   # Follow prompts to select frontend, backend, UI library
+   ```
+
+2. **Develop your application:**
+   ```bash
+   # Install dependencies, write code, test locally
+   npm run dev
+   ```
+
+3. **Test the build:**
+   ```bash
+   forge build
+   # Verify bundle creation in .forgekit/bundle.tar.gz
+   ```
+
+4. **Deploy to production:**
+   ```bash
+   forge login    # First time only
+   forge deploy   # Builds and deploys automatically
+   ```
+
+5. **Manage deployments:**
+   ```bash
+   forge deployments:list  # View all your projects
+   forge secrets:set .env.production --create  # Add runtime secrets
+   ```
+
+## Architecture
+
+ForgeKit uses a **containerized hosting platform** with:
+
+- **Traefik-based routing** for automatic HTTPS and load balancing
+- **Isolated containers** per user project (`forgekit-{safeUserId}-{slug}`)
+- **Supabase authentication** for secure user management
+- **Docker-based builds** with automatic Dockerfile generation
 
 
 ## Development

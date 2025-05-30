@@ -7,7 +7,8 @@ const require = createRequire(import.meta.url);
 const tar = require('tar');
 import axios from 'axios';
 import FormData from 'form-data';
-import { ensureLoggedIn } from '../src/auth.js';
+import { ensureLoggedIn, getSavedUserId, getSavedSafeUserId } from '../src/auth.js';
+import inquirer from 'inquirer';
 import { generateDockerfile } from '../src/utils/dockerfile.js';
 import { generateDockerignore, filesFromDockerignore } from '../src/utils/dockerignore.js';
 import { detectEnvVars, loadEnvFiles } from '../src/utils/env.js';
@@ -28,6 +29,101 @@ function readForgeConfig() {
   return {};
 }
 
+function generateSlug(name) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 50);
+}
+
+async function ensureForgeConfig() {
+  const forgeConfigPath = path.join(process.cwd(), 'forgekit.json');
+  
+  if (fs.existsSync(forgeConfigPath)) {
+    // Config already exists, check if it has required fields
+    try {
+      const config = JSON.parse(fs.readFileSync(forgeConfigPath, 'utf-8'));
+      if (!config.userId || !config.safeUserId || !config.slug) {
+        // Missing required fields, update the config
+        const userId = getSavedUserId();
+        const safeUserId = getSavedSafeUserId();
+        if (!userId || !safeUserId) {
+          console.error('❌ User ID not found. Please run `forge login` first.');
+          return null;
+        }
+        
+        if (!config.userId) config.userId = userId;
+        if (!config.safeUserId) config.safeUserId = safeUserId;
+        if (!config.slug) {
+          config.slug = config.projectName ? generateSlug(config.projectName) : generateSlug(path.basename(process.cwd()));
+        }
+        
+        fs.writeFileSync(forgeConfigPath, JSON.stringify(config, null, 2));
+        console.log('📝 Updated forgekit.json with missing fields');
+      }
+      return config;
+    } catch (err) {
+      console.error('❌ Error reading forgekit.json:', err.message);
+      return null;
+    }
+  }
+  
+  // Generate new forgekit.json
+  const userId = getSavedUserId();
+  const safeUserId = getSavedSafeUserId();
+  if (!userId || !safeUserId) {
+    console.error('❌ User ID not found. Please run `forge login` first.');
+    return null;
+  }
+  
+  const defaultName = path.basename(process.cwd());
+  const defaultSlug = generateSlug(defaultName);
+  
+  console.log('\n📝 Creating forgekit.json for your project...');
+  
+  const answers = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'projectName',
+      message: 'Project name:',
+      default: defaultName,
+      validate: input => !!input || 'Project name cannot be empty.'
+    },
+    {
+      type: 'input',
+      name: 'slug',
+      message: 'Project slug (used in URLs):',
+      default: answers => generateSlug(answers.projectName || defaultName),
+      validate: input => {
+        if (!input) return 'Slug cannot be empty.';
+        if (!/^[a-z0-9-]+$/.test(input)) return 'Slug can only contain lowercase letters, numbers, and hyphens.';
+        return true;
+      }
+    }
+  ]);
+  
+  const config = {
+    userId: userId,
+    safeUserId: safeUserId,
+    slug: answers.slug,
+    projectName: answers.projectName
+  };
+  
+  // Add existing config if available
+  const existingConfig = readForgeConfig();
+  if (existingConfig.frontend) config.frontend = existingConfig.frontend;
+  if (existingConfig.backend) config.backend = existingConfig.backend;
+  if (existingConfig.ui) config.ui = existingConfig.ui;
+  if (existingConfig.database) config.database = existingConfig.database;
+  if (existingConfig.buildDir) config.buildDir = existingConfig.buildDir;
+  
+  fs.writeFileSync(forgeConfigPath, JSON.stringify(config, null, 2));
+  console.log('✅ Created forgekit.json');
+  
+  return config;
+}
+
 
 export const handler = async (argv = {}) => {
   const token = await ensureLoggedIn();
@@ -38,22 +134,15 @@ export const handler = async (argv = {}) => {
 
   const bundlePath = path.join(process.cwd(), 'bundle.tar.gz');
 
-  // Determine project slug from forgekit.json
-  let slug;
-  const forgeConfigPath = path.join(process.cwd(), 'forgekit.json');
-  if (!fs.existsSync(forgeConfigPath)) {
-    console.error('❌ Cannot detect project slug—missing forgekit.json in the project root.');
+  // Ensure forgekit.json exists and has required fields
+  const forgeConfig = await ensureForgeConfig();
+  if (!forgeConfig) {
     return;
   }
-  try {
-    const forgeConfig = JSON.parse(fs.readFileSync(forgeConfigPath, 'utf-8'));
-    slug = forgeConfig.projectName || forgeConfig.slug;
-    if (!slug) {
-      console.error('❌ Project slug not found in forgekit.json.');
-      return;
-    }
-  } catch (error) {
-    console.error(`❌ Error reading or parsing forgekit.json: ${error.message}`);
+  
+  const slug = forgeConfig.slug;
+  if (!slug) {
+    console.error('❌ Project slug not found in forgekit.json.');
     return;
   }
   
@@ -77,7 +166,6 @@ export const handler = async (argv = {}) => {
   try {
     // Dockerfile generation logic
     if (!fs.existsSync(dockerfilePath)) {
-      const forgeConfig = readForgeConfig();
       let stackForDockerfile;
 
       if (forgeConfig && Object.keys(forgeConfig).length > 0) {
@@ -110,7 +198,6 @@ export const handler = async (argv = {}) => {
 
     // Dockerignore generation logic (always run once per deploy)
     if (!fs.existsSync(dockerignorePath)) {
-      const forgeConfig = readForgeConfig();
       let stackName = forgeConfig.stack || forgeConfig.frontend || forgeConfig.backend;
       if (!stackName) {
         stackName = 'node';
