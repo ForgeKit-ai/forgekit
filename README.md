@@ -518,6 +518,8 @@ forge deploy --env production --domain myapp.com
 - **CLI Tool**: Project scaffolding and deployment (this package)
 - **Web Dashboard**: [forgekit.ai](https://forgekit.ai) - Visual project management
 - **Deploy API**: [api.forgekit.ai](https://api.forgekit.ai) - Containerized hosting infrastructure
+- **Analytics API**: Real-time event tracking for deployed applications
+- **Analytics Worker**: Event processing and aggregation pipeline
 
 ### Complete Workflow
 1. **Create**: `forge` → Scaffolds production-ready project with your chosen stack
