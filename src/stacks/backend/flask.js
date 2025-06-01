@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
-import { checkCommand, setupRootConcurrentDev } from '../../utils.js';
+import { checkCommand } from '../../utils.js';
 
 export async function setupFlask(config) {
   const { targetDir, projectName } = config;
@@ -64,6 +64,4 @@ if __name__ == '__main__':
   result = shell.exec('venv/bin/pip install -r requirements.txt', { cwd: backendDir, silent: true });
   checkCommand(result, 'Failed to install Flask dependencies');
 
-  // Update root package.json for concurrent development
-  setupRootConcurrentDev(targetDir);
 }

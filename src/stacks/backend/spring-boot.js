@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
-import { checkCommand, setupRootConcurrentDev } from '../../utils.js';
+import { checkCommand } from '../../utils.js';
 
 export async function setupSpringBoot(config) {
   const { targetDir, projectName } = config;
@@ -128,6 +128,4 @@ public class Application {
   fs.writeFileSync(path.join(appJavaDir, 'Application.java'), appJava);
   console.log('↳ Created Application.java with CORS support');
 
-  // Update root package.json for concurrent development
-  setupRootConcurrentDev(targetDir);
 }

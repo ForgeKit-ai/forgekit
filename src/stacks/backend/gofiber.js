@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
-import { checkCommand, setupRootConcurrentDev } from '../../utils.js';
+import { checkCommand } from '../../utils.js';
 
 export async function setupGoFiber(config) {
   const { targetDir, projectName } = config;
@@ -85,6 +85,4 @@ func main() {
   fs.writeFileSync(path.join(backendDir, 'main.go'), mainGo);
   console.log('↳ Created main.go with CORS support');
 
-  // Update root package.json for concurrent development
-  setupRootConcurrentDev(targetDir);
 }

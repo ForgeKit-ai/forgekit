@@ -32,8 +32,7 @@ export async function setupNextJS(config) {
   // Configure Next.js for production deployment
   console.log("\n⚙️ Configuring Next.js for production...");
   const nextConfigPath = path.join(targetDir, 'next.config.ts');
-  if (fs.existsSync(nextConfigPath)) {
-    const productionConfig = `import type { NextConfig } from "next";
+  const productionConfig = `import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -47,9 +46,8 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;`;
-    fs.writeFileSync(nextConfigPath, productionConfig);
-    console.log('↳ Configured Next.js for standalone deployment');
-  }
+  fs.writeFileSync(nextConfigPath, productionConfig);
+  console.log('↳ Configured Next.js for standalone deployment');
 
   if (config.database === 'supabase') {
     await setupSupabase(targetDir, 'NEXT_PUBLIC');

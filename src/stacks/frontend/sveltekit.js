@@ -28,8 +28,7 @@ export async function setupSvelteKit(config) {
 
   // Configure svelte.config.js for static deployment
   const configPath = path.join(frontendDir, 'svelte.config.js');
-  if (fs.existsSync(configPath)) {
-    const staticConfig = `import adapter from '@sveltejs/adapter-static';
+  const staticConfig = `import adapter from '@sveltejs/adapter-static';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -45,9 +44,8 @@ const config = {
 };
 
 export default config;`;
-    fs.writeFileSync(configPath, staticConfig);
-    console.log('  ↳ Configured SvelteKit for static deployment');
-  }
+  fs.writeFileSync(configPath, staticConfig);
+  console.log('  ↳ Configured SvelteKit for static deployment');
 
   // Verify and ensure build script exists
   const pkgJsonPath = path.join(frontendDir, 'package.json');

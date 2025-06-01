@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { drawForgeHammer, setupGit, createProjectStructure, sanitizeProjectName, setupRootFrontendCoordination } from '../src/utils.js';
+import { drawForgeHammer, setupGit, createProjectStructure, sanitizeProjectName, setupRootFrontendCoordination, setupRootFullStackCoordination } from '../src/utils.js';
 import { spawn } from 'child_process';
 import { scaffoldProject } from '../src/scaffold.js';
 import { frontendOptions, uiOptions, backendOptions, databaseOptions, uiCompatibility, backendCompatibility, dbCompatibility } from '../src/registries/modularOptions.js';
@@ -47,6 +47,7 @@ async function main() {
   // If running a command, don't show the interactive scaffolding
   const commands = ['deploy', 'login', 'logout', 'whoami', 'list', 'delete', 'logs', 'stats'];
   if (commands.includes(argv._[0])) {
+    // Commands handle their own exit, but ensure we don't continue to scaffolding
     return;
   }
 
@@ -153,9 +154,11 @@ async function main() {
   try {
     await scaffoldProject(config);
 
-    // Set up root package.json coordination for frontend-only projects
+    // Set up root package.json coordination
     if (!options.backend) {
       setupRootFrontendCoordination(projectRoot, options.frontend);
+    } else {
+      setupRootFullStackCoordination(projectRoot, options.frontend, options.backend);
     }
 
     const buildDirMap = {

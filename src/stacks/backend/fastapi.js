@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
-import { checkCommand, setupRootConcurrentDev } from '../../utils.js';
+import { checkCommand } from '../../utils.js';
 
 export async function setupFastAPI(config) {
   const { targetDir, projectName } = config;
@@ -66,6 +66,4 @@ async def health_check():
   result = shell.exec('venv/bin/pip install -r requirements.txt', { cwd: backendDir, silent: true });
   checkCommand(result, 'Failed to install FastAPI dependencies');
 
-  // Update root package.json for concurrent development
-  setupRootConcurrentDev(targetDir);
 }

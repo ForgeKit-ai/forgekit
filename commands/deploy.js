@@ -10,6 +10,7 @@ import { ensureLoggedIn } from '../src/auth.js';
 import { secureClient } from '../src/secureClient.js';
 import { ProgressIndicator } from '../src/progressIndicator.js';
 import { validateDeployReadiness, verifyBuildOutput } from '../src/utils.js';
+import { createFilteredBundle, estimateBundleSize } from '../src/bundleUtils.js';
 
 const asyncExec = promisify(exec);
 
@@ -97,6 +98,77 @@ function readForgeConfig() {
   return {};
 }
 
+function generateDockerfileForDeployment(projectDir, buildDir, config) {
+  const dockerfilePath = path.join(projectDir, 'Dockerfile');
+  
+  // Secure, universal Dockerfile that works with most web apps
+  const dockerfileContent = `FROM nginx:alpine
+
+# Copy built files and set ownership
+COPY --chown=nginx:nginx ${buildDir} /usr/share/nginx/html
+
+# Create a custom nginx config that works with non-root user
+RUN echo 'server { \\
+    listen 8080; \\
+    listen [::]:8080; \\
+    server_name _; \\
+    root /usr/share/nginx/html; \\
+    index index.html; \\
+    location / { \\
+        try_files $uri $uri/ /index.html; \\
+    } \\
+    # Security headers \\
+    add_header X-Frame-Options "SAMEORIGIN" always; \\
+    add_header X-Content-Type-Options "nosniff" always; \\
+    add_header X-XSS-Protection "1; mode=block" always; \\
+}' > /etc/nginx/conf.d/default.conf
+
+# Create a minimal nginx.conf that works with non-root user
+RUN echo 'worker_processes auto; \\
+error_log /var/log/nginx/error.log warn; \\
+pid /tmp/nginx.pid; \\
+events { \\
+    worker_connections 1024; \\
+} \\
+http { \\
+    include /etc/nginx/mime.types; \\
+    default_type application/octet-stream; \\
+    sendfile on; \\
+    keepalive_timeout 65; \\
+    include /etc/nginx/conf.d/*.conf; \\
+}' > /etc/nginx/nginx.conf
+
+# Create directories nginx needs and set permissions
+RUN mkdir -p /var/cache/nginx/client_temp && \\
+    mkdir -p /var/cache/nginx/proxy_temp && \\
+    mkdir -p /var/cache/nginx/fastcgi_temp && \\
+    mkdir -p /var/cache/nginx/uwsgi_temp && \\
+    mkdir -p /var/cache/nginx/scgi_temp && \\
+    mkdir -p /var/log/nginx && \\
+    mkdir -p /tmp && \\
+    chown -R nginx:nginx /var/cache/nginx && \\
+    chown -R nginx:nginx /var/log/nginx && \\
+    chown -R nginx:nginx /tmp && \\
+    chown -R nginx:nginx /usr/share/nginx/html && \\
+    chown -R nginx:nginx /etc/nginx && \\
+    chmod -R 755 /var/cache/nginx && \\
+    chmod -R 755 /var/log/nginx && \\
+    chmod -R 755 /tmp
+
+# Switch to non-root user
+USER nginx
+
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \\
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
+
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]`;
+  
+  fs.writeFileSync(dockerfilePath, dockerfileContent);
+  console.log('Generated secure Dockerfile for static deployment');
+}
+
 function detectBuildDir(argv) {
   if (argv.buildDir) return argv.buildDir;
   const cfg = readForgeConfig();
@@ -116,10 +188,42 @@ function detectBuildDir(argv) {
   
   // Handle both v1 and v2 config formats
   const frontend = cfg.stack?.frontend || cfg.frontend;
-  if (frontend && map[frontend]) return map[frontend];
+  const backend = cfg.stack?.backend || cfg.backend;
   
+  if (frontend && map[frontend]) {
+    const expectedDir = map[frontend];
+    
+    // For full-stack projects, check if build output is in frontend subdirectory
+    if (backend && fs.existsSync(path.join('frontend', expectedDir))) {
+      return path.join('frontend', expectedDir);
+    }
+    
+    // For frontend-only projects or if frontend build dir exists at root
+    if (fs.existsSync(expectedDir)) {
+      return expectedDir;
+    }
+    
+    // Fallback: return expected directory (will be created during build)
+    // For full-stack projects, frontend build gets copied to root dist/
+    return expectedDir;
+  }
+  
+  // Fallback guesses - check both root and frontend subdirectory
   const guesses = ['dist', 'build', '.next', 'out'];
-  return guesses.find(d => fs.existsSync(d)) || 'dist';
+  
+  // First check root directory
+  for (const guess of guesses) {
+    if (fs.existsSync(guess)) return guess;
+  }
+  
+  // Then check frontend subdirectory
+  for (const guess of guesses) {
+    const frontendPath = path.join('frontend', guess);
+    if (fs.existsSync(frontendPath)) return frontendPath;
+  }
+  
+  // Final fallback
+  return 'dist';
 }
 
 export const handler = async (argv = {}) => {
@@ -329,10 +433,65 @@ export const handler = async (argv = {}) => {
       return;
     }
 
-    progress.updateStep(`Compressing ${buildDir} directory`);
+    // Ensure Dockerfile exists for deployment
+    const dockerfilePath = path.join(process.cwd(), 'Dockerfile');
+    if (!fs.existsSync(dockerfilePath)) {
+      progress.logVerbose('Dockerfile not found, generating one based on project configuration...');
+      generateDockerfileForDeployment(process.cwd(), buildDir, config);
+      progress.logVerbose('Generated Dockerfile for deployment');
+    } else {
+      progress.logVerbose('Using existing Dockerfile');
+    }
+
+    progress.updateStep(`Creating optimized deployment bundle`);
     
     try {
-      await tar.c({ gzip: true, file: bundlePath }, [buildDir]);
+      // Include build directory and project metadata for deployment context
+      const candidateFiles = [buildDir];
+      
+      // Always include Dockerfile (generated or existing)
+      if (fs.existsSync('Dockerfile')) {
+        candidateFiles.push('Dockerfile');
+        progress.logVerbose('Including Dockerfile for deployment');
+      }
+      
+      // Add backend build output if it exists (for full-stack projects)
+      if (fs.existsSync('backend-dist')) {
+        candidateFiles.push('backend-dist');
+        progress.logVerbose('Including backend build output: backend-dist');
+      }
+      
+      // Add backend source if it exists (for runtime dependencies)
+      if (fs.existsSync('backend')) {
+        candidateFiles.push('backend');
+        progress.logVerbose('Including backend source: backend');
+      }
+      
+      // Add forgekit.json for stack information
+      if (fs.existsSync('forgekit.json')) {
+        candidateFiles.push('forgekit.json');
+        progress.logVerbose('Including project configuration: forgekit.json');
+      }
+      
+      // Add package.json for dependency and script information
+      if (fs.existsSync('package.json')) {
+        candidateFiles.push('package.json');
+        progress.logVerbose('Including project metadata: package.json');
+      }
+      
+      // Add package-lock.json if it exists
+      if (fs.existsSync('package-lock.json')) {
+        candidateFiles.push('package-lock.json');
+        progress.logVerbose('Including package-lock.json for consistent installs');
+      }
+      
+      // Estimate size before filtering
+      const estimatedSize = estimateBundleSize(candidateFiles, process.cwd());
+      progress.logVerbose(`Estimated bundle: ${(estimatedSize.size / 1024 / 1024).toFixed(2)} MB, ${estimatedSize.files} files (after filtering)`);
+      
+      // Create filtered bundle excluding node_modules and other unwanted files
+      progress.logVerbose('Applying exclusion filters (node_modules, .git, etc.)...');
+      await createFilteredBundle(tar, bundlePath, candidateFiles, process.cwd(), verbose);
       
       const bundleStats = fs.statSync(bundlePath);
       const bundleSizeMB = (bundleStats.size / 1024 / 1024).toFixed(2);
@@ -404,6 +563,9 @@ export const handler = async (argv = {}) => {
       console.log(`   - View your app: ${url}`);
       console.log(`   - Check logs: forge logs ${slug || '<slug>'}`);
       console.log(`   - View stats: forge stats ${slug || '<slug>'}`);
+      
+      // Explicitly exit with success code
+      process.exit(0);
 
     } catch (uploadError) {
       progress.failStep(currentStepIndex, 'Upload failed');
@@ -420,9 +582,9 @@ export const handler = async (argv = {}) => {
           case 413:
             console.error('❌ Upload failed: Project bundle is too large.');
             console.error('💡 Try these optimizations:');
-            console.error('   • Remove node_modules from your project');
-            console.error('   • Check your .gitignore includes build artifacts');
             console.error('   • Optimize your build output size');
+            console.error('   • Use .dockerignore to exclude large files');
+            console.error('   • Remove unnecessary assets from your build');
             break;
           case 429:
             console.error('❌ Upload failed: Rate limit exceeded. Please wait a few minutes and try again.');
@@ -450,7 +612,7 @@ export const handler = async (argv = {}) => {
         console.error('\n📋 Server response:', uploadError.response.data);
       }
       
-      return;
+      process.exit(1);
     }
 
   } catch (err) {
@@ -461,6 +623,7 @@ export const handler = async (argv = {}) => {
     if (verbose) {
       console.error('Error details:', err);
     }
+    process.exit(1);
   } finally {
     // Cleanup bundle file
     try {

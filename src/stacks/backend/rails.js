@@ -1,7 +1,6 @@
 import shell from 'shelljs';
 import path from 'path';
 import fs from 'fs';
-import { setupRootConcurrentDev } from '../../utils.js';
 
 export async function setupRails(config) {
   const { targetDir, projectName } = config;
@@ -62,6 +61,4 @@ end
     }
   }
 
-  // Update root package.json for concurrent development
-  setupRootConcurrentDev(targetDir);
 }

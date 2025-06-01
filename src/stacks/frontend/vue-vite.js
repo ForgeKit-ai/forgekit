@@ -71,15 +71,14 @@ export async function setupVueVite(config) {
   // Configure Vite for production optimization
   console.log('  Configuring Vite for production...');
   const viteConfigPath = path.join(frontendDir, 'vite.config.ts');
-  if (fs.existsSync(viteConfigPath)) {
-    const productionConfig = `import { defineConfig } from 'vite'
+  const productionConfig = `import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
   build: {
-    minify: 'terser',
+    minify: 'esbuild',
     sourcemap: false,
     rollupOptions: {
       output: {
@@ -96,9 +95,8 @@ export default defineConfig({
     port: 3000,
   },
 })`;
-    fs.writeFileSync(viteConfigPath, productionConfig);
-    console.log('  ↳ Configured Vite for optimized builds');
-  }
+  fs.writeFileSync(viteConfigPath, productionConfig);
+  console.log('  ↳ Configured Vite for optimized builds');
 
   if (config.database === 'supabase') {
     await setupSupabase(frontendDir, 'VITE');

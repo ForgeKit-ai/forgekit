@@ -27,21 +27,21 @@ export const handler = async (argv = {}) => {
   const token = await ensureLoggedIn();
   if (!token) {
     console.error('❌ Unable to authenticate. Please run `forge login` first.');
-    return;
+    process.exit(1);
   }
 
   const { slug, force, keepData } = argv;
 
   if (!slug) {
     console.error('❌ Deployment slug is required. Usage: forge delete <slug>');
-    return;
+    process.exit(1);
   }
 
   try {
     // Validate slug format
     if (!/^[a-z0-9-]+$/.test(slug)) {
       console.error('❌ Invalid slug format. Must contain only lowercase letters, numbers, and hyphens.');
-      return;
+      process.exit(1);
     }
 
     // Get deployment info first
@@ -57,7 +57,7 @@ export const handler = async (argv = {}) => {
     } catch (err) {
       if (err.response && err.response.status === 404) {
         console.error(`❌ Deployment '${slug}' not found.`);
-        return;
+        process.exit(1);
       }
       throw err;
     }
@@ -82,7 +82,7 @@ export const handler = async (argv = {}) => {
 
       if (!answers.confirmDelete) {
         console.log('🚫 Deletion cancelled.');
-        return;
+        process.exit(0);
       }
 
       // Additional confirmation for production-looking deployments
@@ -98,7 +98,7 @@ export const handler = async (argv = {}) => {
 
         if (finalConfirm.typeSlug !== slug) {
           console.log('🚫 Deletion cancelled.');
-          return;
+          process.exit(0);
         }
       }
     }
@@ -120,6 +120,7 @@ export const handler = async (argv = {}) => {
     } else {
       console.log('🧹 All associated data has been removed.');
     }
+    process.exit(0);
 
   } catch (err) {
     if (err.response && err.response.status === 401) {

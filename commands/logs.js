@@ -41,25 +41,25 @@ export const handler = async (argv = {}) => {
   const token = await ensureLoggedIn();
   if (!token) {
     console.error('❌ Unable to authenticate. Please run `forge login` first.');
-    return;
+    process.exit(1);
   }
 
   const { slug, lines, follow, since, level, raw } = argv;
 
   if (!slug) {
     console.error('❌ Deployment slug is required. Usage: forge logs <slug>');
-    return;
+    process.exit(1);
   }
 
   // Validate inputs
   if (lines > 1000) {
     console.error('❌ Maximum 1000 lines allowed.');
-    return;
+    process.exit(1);
   }
 
   if (!/^[a-z0-9-]+$/.test(slug)) {
     console.error('❌ Invalid slug format. Must contain only lowercase letters, numbers, and hyphens.');
-    return;
+    process.exit(1);
   }
 
   try {
@@ -98,7 +98,7 @@ export const handler = async (argv = {}) => {
         console.log('📭 No logs found for this deployment.');
         console.log('💡 The container may not have started yet or may not be producing logs.');
       }
-      return;
+      process.exit(0);
     }
 
     // Display logs
@@ -140,6 +140,7 @@ export const handler = async (argv = {}) => {
       console.log('\n💡 Live log following is not yet implemented.');
       console.log('   Run this command again to see newer logs.');
     }
+    process.exit(0);
 
   } catch (err) {
     if (err.response && err.response.status === 401) {

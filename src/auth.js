@@ -163,7 +163,7 @@ export async function login() {
         
         // Open browser
         const cmd = process.platform === 'darwin' ? 'open' :
-                   process.platform === 'win32' ? 'start' : 'xdg-open';
+                   process.platform === 'win32' ? 'start ""' : 'xdg-open';
         
         exec(`${cmd} "${loginUrl}"`, (error) => {
           if (error) {

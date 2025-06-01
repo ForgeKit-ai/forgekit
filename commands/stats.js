@@ -136,7 +136,7 @@ export const handler = async (argv = {}) => {
   const token = await ensureLoggedIn();
   if (!token) {
     console.error('❌ Unable to authenticate. Please run `forge login` first.');
-    return;
+    process.exit(1);
   }
 
   const { slug, format, watch, interval } = argv;
@@ -144,12 +144,12 @@ export const handler = async (argv = {}) => {
   // Validate inputs
   if (slug && !/^[a-z0-9-]+$/.test(slug)) {
     console.error('❌ Invalid slug format. Must contain only lowercase letters, numbers, and hyphens.');
-    return;
+    process.exit(1);
   }
 
   if (interval < 1 || interval > 60) {
     console.error('❌ Interval must be between 1 and 60 seconds.');
-    return;
+    process.exit(1);
   }
 
   const fetchStats = async () => {
@@ -220,6 +220,7 @@ export const handler = async (argv = {}) => {
       
       const data = await fetchStats();
       displayStats(data, format);
+      process.exit(0);
     }
 
   } catch (err) {

@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
-import { checkCommand, setupRootConcurrentDev } from '../../utils.js';
+import { checkCommand } from '../../utils.js';
 
 export async function setupDjango(config) {
   const { targetDir, projectName } = config;
@@ -59,6 +59,4 @@ gunicorn>=21.0.0`;
     console.log('↳ Configured Django for API usage');
   }
 
-  // Update root package.json for concurrent development
-  setupRootConcurrentDev(targetDir);
 }

@@ -4,5 +4,11 @@ export const command = 'login';
 export const describe = 'Authenticate with ForgeKit';
 export const builder = {};
 export const handler = async () => {
-  await login();
+  try {
+    await login();
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Login failed:', error.message);
+    process.exit(1);
+  }
 };

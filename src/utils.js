@@ -33,21 +33,45 @@ export function sanitizeProjectName(name) {
 }
 
 export function drawForgeHammer() {
-  console.log(`\n      _______`);
-  console.log(`     // ___ \\      🔥 Forging your project with ForgeKit 🔨`);
-  console.log(`    | |___| |`);
-  console.log(`    | |___| |     /----\\`);
-  console.log(`    | |   | |    /      \\`);
-  console.log(`    \\ |   | /   /________\\`);
-  console.log(`     \\|___|/   /__________\\`);
-  console.log(`      |   |   |____________|`);
-  console.log(`      |   |   |____________|`);
-  console.log(`      |   |   /------------\\`);
-  console.log(`     /_____\\ /______________\\`);
-  console.log(`    /______\\----------------/`);
-  console.log(`   /________\\______________//`);
-  console.log(`  /__________\\____________//`);
-  console.log(` |____________|___________/\n`);
+  // ANSI color codes for flame gradient and steel anvil
+  const colors = {
+    red: '\x1b[31m',
+    brightRed: '\x1b[91m',
+    yellow: '\x1b[33m',
+    brightYellow: '\x1b[93m',
+    orange: '\x1b[38;5;208m',
+    darkRed: '\x1b[38;5;124m',
+    steel: '\x1b[38;5;240m',        // Dark steel gray for anvil
+    darkSteel: '\x1b[38;5;235m',    // Even darker steel
+    reset: '\x1b[0m'
+  };
+
+  console.log(`\n🔥 Forging your project with ForgeKit 🔥\n`);
+  
+  console.log(`${colors.yellow}                                  *${colors.reset}`);
+  console.log(`${colors.yellow}                                  ***${colors.reset}`);
+  console.log(`${colors.yellow}                                  ****${colors.reset}`);
+  console.log(`${colors.yellow}                                  *****${colors.reset}`);
+  console.log(`${colors.brightYellow}                                 ******${colors.reset}`);
+  console.log(`${colors.brightYellow}                               ********${colors.reset}`);
+  console.log(`${colors.brightYellow}                              *********  **${colors.reset}`);
+  console.log(`${colors.orange}                             *********  ***${colors.reset}`);
+  console.log(`${colors.orange}                        **  ******+++   ****${colors.reset}`);
+  console.log(`${colors.orange}                       ***  +++++++++   *****${colors.reset}`);
+  console.log(`${colors.orange}                      ****  ++++++++++  ++++**${colors.reset}`);
+  console.log(`${colors.brightRed}                     ++++++  ++++++++++  ++++++${colors.reset}`);
+  console.log(`${colors.brightRed}                     +++++++  ++++++++++  ++++++${colors.reset}`);
+  console.log(`${colors.brightRed}                    ++++++++++++++++++++  +++++++${colors.reset}`);
+  console.log(`${colors.brightRed}                    +++++++++++++++++++++ ++++++++${colors.reset}`);
+  console.log(`${colors.red}                    ++++${colors.steel}==============${colors.red}++++++++++++${colors.reset}`);
+  console.log(`${colors.red}                    +++++${colors.steel}==============${colors.red}+++++++++++${colors.reset}`);
+  console.log(`${colors.red}                     +++++++${colors.darkSteel}==========${colors.red}++++++++++${colors.reset}`);
+  console.log(`${colors.darkRed}                      ++++++++${colors.darkSteel}========${colors.darkRed}++++++++++${colors.reset}`);
+  console.log(`${colors.darkRed}                       +++++++${colors.darkSteel}========${colors.darkRed}+++++++++${colors.reset}`);
+  console.log(`${colors.darkRed}                        ++++++${colors.darkSteel}========${colors.darkRed}++++++++${colors.reset}`);
+  console.log(`${colors.darkRed}                          +++${colors.darkSteel}===========${colors.darkRed}++++${colors.reset}`);
+  console.log(`${colors.darkSteel}                              ==========${colors.reset}`);
+  console.log(`\n`);
   console.log("===================================================\n");
 }
 
@@ -334,7 +358,9 @@ export function setupRootFrontendCoordination(projectRoot, frontend) {
     'sveltekit': { build: 'vite build', dev: 'vite dev', preview: 'vite preview' },
     'astro': { build: 'astro build', dev: 'astro dev', preview: 'astro preview' },
     'nextjs': { build: 'next build', dev: 'next dev', start: 'next start' },
-    'angular': { build: 'ng build --configuration production', dev: 'ng serve', start: 'ng serve --configuration production' }
+    'angular': { build: 'ng build --configuration production', dev: 'ng serve', start: 'ng serve --configuration production' },
+    'blazor': { build: 'dotnet publish -c Release -o wwwroot', dev: 'dotnet watch', serve: 'dotnet run' },
+    'godot': { build: 'echo "Build Godot project manually in editor" && mkdir -p dist && cp -r . dist/', dev: 'echo "Open in Godot editor"' }
   };
 
   const scripts = scriptMap[frontend] || { build: 'npm run build', dev: 'npm run dev' };
@@ -342,9 +368,38 @@ export function setupRootFrontendCoordination(projectRoot, frontend) {
   rootPkg.scripts.dev = scripts.dev;
   if (scripts.start) rootPkg.scripts.start = scripts.start;
   if (scripts.preview) rootPkg.scripts.preview = scripts.preview;
+  if (scripts.serve) rootPkg.scripts.serve = scripts.serve;
 
   fs.writeFileSync(rootPkgJsonPath, JSON.stringify(rootPkg, null, 2));
   console.log(`↳ Added deployment scripts to root package.json for ${frontend}.`);
+}
+
+export function setupRootFullStackCoordination(projectRoot, frontend, backend) {
+  const rootPkgJsonPath = path.join(projectRoot, 'package.json');
+  if (!fs.existsSync(rootPkgJsonPath)) {
+    let initResult = shell.exec("npm init -y", { cwd: projectRoot, silent: true});
+    checkCommand(initResult, "Failed to create a root package.json");
+  }
+
+  let installResult = shell.exec("npm install -D concurrently", { cwd: projectRoot, silent: true });
+  checkCommand(installResult, "Failed to install 'concurrently' at root");
+
+  const rootPkg = JSON.parse(fs.readFileSync(rootPkgJsonPath, 'utf-8'));
+  if (!rootPkg.scripts) {
+    rootPkg.scripts = {};
+  }
+
+  // Add full-stack coordination scripts
+  rootPkg.scripts.dev = "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"";
+  rootPkg.scripts.build = "npm run build:all && npm run copy-builds";
+  rootPkg.scripts["build:all"] = "concurrently \"npm run build --prefix frontend\" \"npm run build --prefix backend\"";
+  rootPkg.scripts["build:frontend"] = "npm run build --prefix frontend";
+  rootPkg.scripts["build:backend"] = "npm run build --prefix backend";
+  rootPkg.scripts["copy-builds"] = "node -e \"const fs=require('fs'); const path=require('path'); if(fs.existsSync('frontend/dist')){fs.cpSync('frontend/dist','dist',{recursive:true})} else if(fs.existsSync('frontend/build')){fs.cpSync('frontend/build','dist',{recursive:true})} if(fs.existsSync('backend/dist')){fs.cpSync('backend/dist','backend-dist',{recursive:true})} else if(fs.existsSync('backend/target')){fs.cpSync('backend/target','backend-dist',{recursive:true})} else if(fs.existsSync('backend/main')){fs.cpSync('backend/main','backend-dist/main')} console.log('✅ Copied build outputs to deployment directories')\"";
+  rootPkg.scripts.start = "concurrently \"npm run start --prefix frontend\" \"npm run start --prefix backend\"";
+
+  fs.writeFileSync(rootPkgJsonPath, JSON.stringify(rootPkg, null, 2));
+  console.log(`↳ Added full-stack coordination scripts to root package.json.`);
 }
 
 export async function validateDeployReadiness(projectRoot, verbose = false) {

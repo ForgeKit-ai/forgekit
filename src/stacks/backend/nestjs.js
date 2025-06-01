@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
-import { checkCommand, setupRootConcurrentDev } from '../../utils.js';
+import { checkCommand } from '../../utils.js';
 
 export async function setupNestJS(config) {
   const { targetDir, projectName } = config;
@@ -181,6 +181,4 @@ CMD ["node", "dist/main"]`;
   fs.writeFileSync(path.join(backendDir, 'Dockerfile'), dockerfileContent);
   console.log('↳ Created production-ready Dockerfile');
 
-  // Update root package.json for concurrent development
-  setupRootConcurrentDev(targetDir);
 }

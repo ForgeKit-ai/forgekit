@@ -23,7 +23,7 @@ export const handler = async (argv = {}) => {
   const token = await ensureLoggedIn();
   if (!token) {
     console.error('❌ Unable to authenticate. Please run `forge login` first.');
-    return;
+    process.exit(1);
   }
 
   try {
@@ -38,12 +38,12 @@ export const handler = async (argv = {}) => {
 
     if (deployments.length === 0) {
       console.log('📭 No deployments found. Deploy your first project with `forge deploy`');
-      return;
+      process.exit(0);
     }
 
     if (argv.format === 'json') {
       console.log(JSON.stringify(deployments, null, 2));
-      return;
+      process.exit(0);
     }
 
     // Table format
@@ -68,6 +68,7 @@ export const handler = async (argv = {}) => {
     }
 
     console.log(`Total: ${deployments.length} deployment${deployments.length === 1 ? '' : 's'}`);
+    process.exit(0);
 
   } catch (err) {
     if (err.response && err.response.status === 401) {

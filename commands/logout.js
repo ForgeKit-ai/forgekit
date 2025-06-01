@@ -9,12 +9,13 @@ export const handler = async () => {
     
     if (!tokenInfo) {
       console.log('ℹ️  No active session found');
-      return;
+      process.exit(0);
     }
     
     console.log(`🔓 Logging out user: ${tokenInfo.email || tokenInfo.userId}`);
     tokenManager.clearToken();
     console.log('✅ Successfully logged out');
+    process.exit(0);
   } catch (error) {
     console.error('❌ Logout failed:', error.message);
     process.exit(1);

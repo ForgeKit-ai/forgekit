@@ -10,7 +10,7 @@ export const handler = async () => {
     if (!token) {
       console.log('❌ Not authenticated');
       console.log('Run `forge login` to authenticate');
-      return;
+      process.exit(1);
     }
     
     const tokenInfo = tokenManager.getTokenInfo();
@@ -18,7 +18,7 @@ export const handler = async () => {
     if (!tokenInfo) {
       console.log('❌ Invalid token found');
       console.log('Run `forge login` to re-authenticate');
-      return;
+      process.exit(1);
     }
     
     console.log('✅ Authenticated as:');
@@ -49,8 +49,11 @@ export const handler = async () => {
       console.log(`   Logged in: ${tokenInfo.issuedAt.toLocaleDateString()}`);
     }
     
+    process.exit(0);
+    
   } catch (error) {
     console.error('❌ Error checking authentication status:', error.message);
     console.log('Run `forge login` to re-authenticate');
+    process.exit(1);
   }
 };

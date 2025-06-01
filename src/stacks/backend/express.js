@@ -1,7 +1,6 @@
 import path from 'path';
 import fs from 'fs';
 import shell from 'shelljs';
-import { setupRootConcurrentDev } from '../../utils.js';
 
 export async function setupExpressBackend(config) {
   const { targetDir, useNodemon } = config;
@@ -91,5 +90,4 @@ export async function setupExpressBackend(config) {
   fs.writeFileSync(backendEnvExamplePath, backendEnvContent);
   console.log(`↳ Created .env.example in backend`);
 
-  setupRootConcurrentDev(targetDir);
 }

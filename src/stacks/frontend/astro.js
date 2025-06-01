@@ -21,8 +21,7 @@ export async function setupAstro(config) {
   // Configure Astro for static deployment
   console.log('  Configuring Astro for deployment...');
   const configPath = path.join(frontendDir, 'astro.config.mjs');
-  if (fs.existsSync(configPath)) {
-    const astroConfig = `import { defineConfig } from 'astro/config';
+  const astroConfig = `import { defineConfig } from 'astro/config';
 
 // https://astro.build/config
 export default defineConfig({
@@ -31,9 +30,8 @@ export default defineConfig({
     format: 'directory'
   }
 });`;
-    fs.writeFileSync(configPath, astroConfig);
-    console.log('  ↳ Configured Astro for static deployment');
-  }
+  fs.writeFileSync(configPath, astroConfig);
+  console.log('  ↳ Configured Astro for static deployment');
 
   // Verify and ensure build script exists
   console.log('  Verifying build configuration...');
