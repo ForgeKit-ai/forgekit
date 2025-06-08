@@ -36,6 +36,102 @@ forge stats my-app
 
 ---
 
+## 🎯 CLI Commands
+
+### Core Commands
+
+#### `forge` (Interactive Setup)
+Create a new full-stack project with interactive prompts:
+```bash
+forge                    # Interactive mode
+forge --nonInteractive   # Use defaults
+```
+
+#### `forge deploy` (Smart Deployment)
+Deploy projects with automatic redeploy detection:
+```bash
+forge deploy                    # Deploy (new or update existing)
+forge deploy --verbose          # Detailed logging
+forge deploy --dry-run          # Preview without deploying
+forge deploy --skip-build       # Use existing build output
+```
+
+**Smart Redeploy Features:**
+- 🔍 **Automatic Detection**: Reads `forgekit.json` to detect existing deployments
+- 🔄 **URL Persistence**: Maintains same URL for subsequent deployments  
+- 🔵🟢 **Blue/Green Deployment**: Zero-downtime updates with health checks
+- 📋 **Deployment History**: Saves metadata for easy redeployment
+
+#### `forge list` (View Deployments)
+```bash
+forge list              # All your deployments
+forge list --format table   # Formatted table view
+forge list --active    # Only running deployments
+```
+
+#### `forge logs <slug>` (Container Logs)
+```bash
+forge logs my-app                  # Recent logs
+forge logs my-app --tail 100       # Last 100 lines
+forge logs my-app --follow         # Live log streaming
+forge logs my-app --since 1h       # Last hour only
+```
+
+#### `forge stats <slug>` (Resource Monitoring)
+```bash
+forge stats my-app              # Current resource usage
+forge stats my-app --watch      # Live monitoring
+forge stats my-app --history    # Usage history
+```
+
+#### `forge delete <slug>` (Safe Deletion)
+```bash
+forge delete my-app             # Interactive deletion
+forge delete my-app --force     # Skip confirmations
+```
+
+### Authentication Commands
+
+#### `forge login` (Secure Authentication)
+```bash
+forge login                     # OAuth flow with browser
+forge login --port 4000        # Custom callback port
+forge login --timeout 60       # Custom timeout (seconds)
+```
+
+#### `forge logout` / `forge whoami`
+```bash
+forge whoami                   # Check authentication status
+forge logout                  # Clear stored credentials
+```
+
+### Deployment Workflow
+
+**First deployment:**
+```bash
+cd my-project
+forge deploy                   # Creates new deployment + saves to forgekit.json
+```
+
+**Subsequent deployments:**
+```bash
+forge deploy                   # Automatically updates existing deployment
+                              # Same URL, zero-downtime via blue/green
+```
+
+**Deployment metadata in `forgekit.json`:**
+```json
+{
+  "deployment": {
+    "slug": "my-app-a1b2c3",
+    "url": "https://my-app-a1b2c3.forgekit.ai",
+    "lastDeployed": "2025-01-30T15:30:00Z"
+  }
+}
+```
+
+---
+
 ## ✨ Features
 
 ### 🎯 **Interactive Scaffolding**
@@ -89,7 +185,7 @@ forge stats my-app
 | **Django** | Python | ORM, Admin panel | PostgreSQL, SQLite | ✅ |
 | **Ruby on Rails** | Ruby | Convention over configuration | PostgreSQL, MySQL, SQLite | ✅ |
 | **Go Fiber** | Go | High performance, Express-like | PostgreSQL | ✅ |
-| **Spring Boot** | Java | Enterprise features | PostgreSQL, MySQL | ✅ |
+| **Spring Boot** | Java | Production-ready Java framework | PostgreSQL, MySQL | ✅ |
 
 ### UI Frameworks
 

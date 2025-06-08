@@ -230,13 +230,18 @@ export const handler = async (argv = {}) => {
   const { verbose, skipBuild, dryRun } = argv;
   const progress = new ProgressIndicator(verbose);
   
+  // Check if this is a redeploy
+  const config = readForgeConfig();
+  const existingSlug = config.deployment?.slug;
+  const isRedeploy = !!existingSlug;
+  
   // Set up deployment steps
   const steps = [
     { icon: '🔐', message: 'Authenticating', details: 'Verifying stored credentials and login status' },
     { icon: '⚙️', message: 'Preparing deployment', details: 'Reading configuration and detecting build directory' },
     { icon: '🏗️', message: 'Building project', details: 'Running build command to generate production assets' },
     { icon: '📦', message: 'Creating bundle', details: 'Compressing build output into deployment archive' },
-    { icon: '🚀', message: 'Uploading to ForgeKit', details: 'Securely transferring bundle to deployment servers' },
+    { icon: '🚀', message: isRedeploy ? 'Updating deployment' : 'Uploading to ForgeKit', details: isRedeploy ? 'Updating existing deployment with new code' : 'Securely transferring bundle to deployment servers' },
     { icon: '🔄', message: 'Processing deployment', details: 'Server is building and starting your application' }
   ];
 
@@ -291,14 +296,21 @@ export const handler = async (argv = {}) => {
     progress.startStep(currentStepIndex);
     const buildDir = detectBuildDir(argv);
     const bundlePath = path.join(process.cwd(), 'bundle.tar.gz');
-    const deployUrl = process.env.FORGEKIT_DEPLOY_URL || 'https://api.forgekit.ai/deploy_cli';
+    
+    // Determine deploy URL based on whether this is a redeploy
+    let deployUrl;
+    if (isRedeploy) {
+      const baseUrl = process.env.FORGEKIT_DEPLOY_URL?.replace('/deploy_cli', '') || 'https://api.forgekit.ai';
+      deployUrl = `${baseUrl}/redeploy/${existingSlug}`;
+      progress.logVerbose(`Redeploying to existing slug: ${existingSlug}`);
+    } else {
+      deployUrl = process.env.FORGEKIT_DEPLOY_URL || 'https://api.forgekit.ai/deploy_cli';
+    }
     
     progress.logVerbose(`Build directory: ${buildDir}`);
     progress.logVerbose(`Bundle path: ${bundlePath}`);
     progress.logVerbose(`Deploy URL: ${deployUrl}`);
     
-    // Read forgekit.json for additional context
-    const config = readForgeConfig();
     if (config && Object.keys(config).length > 0) {
       progress.logVerbose(`Configuration: ${JSON.stringify(config)}`);
     }
@@ -309,6 +321,11 @@ export const handler = async (argv = {}) => {
       console.log(`   Target URL: ${deployUrl}`);
       console.log(`   Bundle: ${bundlePath}`);
       console.log(`   Skip Build: ${skipBuild ? 'Yes' : 'No'}`);
+      if (isRedeploy) {
+        console.log(`   Mode: Update existing deployment (${existingSlug})`);
+      } else {
+        console.log(`   Mode: New deployment`);
+      }
       console.log('\n✅ Dry run completed. Use `forge deploy` without --dry-run to actually deploy.');
       return;
     }
@@ -553,16 +570,36 @@ export const handler = async (argv = {}) => {
       progress.completeStep(currentStepIndex, 'Deployment processing');
       progress.complete();
 
+      // Save deployment info to forgekit.json for future redeploys
+      if (slug || isRedeploy) {
+        try {
+          const configPath = path.join(process.cwd(), 'forgekit.json');
+          const currentConfig = readForgeConfig();
+          currentConfig.deployment = {
+            slug: slug || existingSlug,
+            url: url,
+            lastDeployed: new Date().toISOString()
+          };
+          if (buildId) {
+            currentConfig.deployment.buildId = buildId;
+          }
+          fs.writeFileSync(configPath, JSON.stringify(currentConfig, null, 2));
+          progress.logVerbose(isRedeploy ? 'Updated deployment info in forgekit.json' : 'Saved deployment info to forgekit.json');
+        } catch (saveError) {
+          progress.logWarning(`Could not save deployment info: ${saveError.message}`);
+        }
+      }
+
       // Success output
-      console.log('\n🎉 Deployment Details:');
+      console.log(isRedeploy ? '\n🎉 Deployment Updated:' : '\n🎉 Deployment Details:');
       console.log(`   URL: ${url}`);
       if (slug) console.log(`   Slug: ${slug}`);
       if (buildId) console.log(`   Build ID: ${buildId}`);
       
       console.log('\n💡 Next steps:');
       console.log(`   - View your app: ${url}`);
-      console.log(`   - Check logs: forge logs ${slug || '<slug>'}`);
-      console.log(`   - View stats: forge stats ${slug || '<slug>'}`);
+      console.log(`   - Check logs: forge logs ${slug || existingSlug || '<slug>'}`);
+      console.log(`   - View stats: forge stats ${slug || existingSlug || '<slug>'}`);
       
       // Explicitly exit with success code
       process.exit(0);

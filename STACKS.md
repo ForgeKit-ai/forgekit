@@ -13,7 +13,7 @@ This document outlines all supported framework combinations in ForgeKit CLI.
 | **Vue (Vite)** | `vue-vite` | 3+ | Progressive Vue.js framework | ✅ |
 | **SvelteKit** | `sveltekit` | 2+ | The web development framework | ✅ |
 | **Astro** | `astro` | 4+ | All-in-one web framework | ✅ |
-| **Angular** | `angular` | 17+ | Enterprise TypeScript framework | ✅ |
+| **Angular** | `angular` | 17+ | Full-featured TypeScript framework | ✅ |
 
 ### Frontend Features
 - **Hot Module Replacement (HMR)**: All frameworks support instant updates during development
@@ -29,7 +29,7 @@ This document outlines all supported framework combinations in ForgeKit CLI.
 | Framework | Key | Language | Description | Database Support |
 |-----------|-----|----------|-------------|------------------|
 | **Express** | `express` | Node.js | Fast, minimalist web framework | PostgreSQL, MongoDB, SQLite |
-| **NestJS** | `nestjs` | Node.js | Enterprise TypeScript framework | PostgreSQL, MongoDB, SQLite |
+| **NestJS** | `nestjs` | Node.js | Production-ready TypeScript framework | PostgreSQL, MongoDB, SQLite |
 | **FastAPI** | `fastapi` | Python | High-performance async API framework | PostgreSQL, SQLite |
 | **Flask** | `flask` | Python | Lightweight WSGI web framework | PostgreSQL, SQLite |
 | **Django** | `django` | Python | High-level Python web framework | PostgreSQL, SQLite |
@@ -297,9 +297,9 @@ forge --projectName jamstack-site \
       --database supabase
 ```
 
-#### Enterprise Angular Application
+#### Full-Stack Angular Application
 ```bash
-forge --projectName enterprise-app \
+forge --projectName angular-app \
       --frontend angular \
       --ui material \
       --backend spring-boot \
