@@ -466,6 +466,64 @@ export const handler = async (argv = {}) => {
       // Include build directory and project metadata for deployment context
       const candidateFiles = [buildDir];
       
+      // Check if this is a Next.js project that needs source files for Docker build
+      const isNextjsWithDockerBuild = config.stack?.frontend === 'nextjs' && fs.existsSync('Dockerfile');
+      
+      if (isNextjsWithDockerBuild) {
+        // For Next.js projects with Dockerfile, include source files needed for build
+        if (fs.existsSync('src')) {
+          candidateFiles.push('src');
+          progress.logVerbose('Including Next.js source directory: src');
+        }
+        
+        if (fs.existsSync('public')) {
+          candidateFiles.push('public');
+          progress.logVerbose('Including Next.js public assets: public');
+        }
+        
+        // Include Next.js configuration files
+        if (fs.existsSync('next.config.js')) {
+          candidateFiles.push('next.config.js');
+          progress.logVerbose('Including Next.js config: next.config.js');
+        }
+        
+        if (fs.existsSync('next.config.mjs')) {
+          candidateFiles.push('next.config.mjs');
+          progress.logVerbose('Including Next.js config: next.config.mjs');
+        }
+        
+        if (fs.existsSync('next.config.ts')) {
+          candidateFiles.push('next.config.ts');
+          progress.logVerbose('Including Next.js config: next.config.ts');
+        }
+        
+        // Include build configuration files
+        if (fs.existsSync('tailwind.config.js')) {
+          candidateFiles.push('tailwind.config.js');
+          progress.logVerbose('Including Tailwind config: tailwind.config.js');
+        }
+        
+        if (fs.existsSync('tailwind.config.ts')) {
+          candidateFiles.push('tailwind.config.ts');
+          progress.logVerbose('Including Tailwind config: tailwind.config.ts');
+        }
+        
+        if (fs.existsSync('postcss.config.js')) {
+          candidateFiles.push('postcss.config.js');
+          progress.logVerbose('Including PostCSS config: postcss.config.js');
+        }
+        
+        if (fs.existsSync('tsconfig.json')) {
+          candidateFiles.push('tsconfig.json');
+          progress.logVerbose('Including TypeScript config: tsconfig.json');
+        }
+        
+        if (fs.existsSync('next-env.d.ts')) {
+          candidateFiles.push('next-env.d.ts');
+          progress.logVerbose('Including Next.js TypeScript env: next-env.d.ts');
+        }
+      }
+      
       // Always include Dockerfile (generated or existing)
       if (fs.existsSync('Dockerfile')) {
         candidateFiles.push('Dockerfile');
@@ -500,6 +558,24 @@ export const handler = async (argv = {}) => {
       if (fs.existsSync('package-lock.json')) {
         candidateFiles.push('package-lock.json');
         progress.logVerbose('Including package-lock.json for consistent installs');
+      }
+      
+      // Add yarn.lock if it exists
+      if (fs.existsSync('yarn.lock')) {
+        candidateFiles.push('yarn.lock');
+        progress.logVerbose('Including yarn.lock for consistent installs');
+      }
+      
+      // Add pnpm-lock.yaml if it exists
+      if (fs.existsSync('pnpm-lock.yaml')) {
+        candidateFiles.push('pnpm-lock.yaml');
+        progress.logVerbose('Including pnpm-lock.yaml for consistent installs');
+      }
+      
+      // Add bun.lockb if it exists
+      if (fs.existsSync('bun.lockb')) {
+        candidateFiles.push('bun.lockb');
+        progress.logVerbose('Including bun.lockb for consistent installs');
       }
       
       // Estimate size before filtering
@@ -539,7 +615,7 @@ export const handler = async (argv = {}) => {
       const res = await retryOperation(async () => {
         return await secureClient.post(deployUrl, form, {
           headers: { ...form.getHeaders(), Authorization: `Bearer ${token}` },
-          timeout: 300000, // 5 minute timeout for uploads
+          timeout: 600000, // 10 minute timeout for uploads
         });
       }, 3, 5000);
       

@@ -9,6 +9,8 @@ import { minimatch } from 'minimatch';
 const DEFAULT_EXCLUSIONS = [
   'node_modules',
   'node_modules/**',
+  '**/node_modules',
+  '**/node_modules/**',
   '.git',
   '.git/**',
   '.gitignore',
@@ -42,7 +44,6 @@ const DEFAULT_EXCLUSIONS = [
   '**/*.spec.ts',
   '**/.eslintrc*',
   '**/.prettierrc*',
-  '**/tsconfig*.json',
   '**/jest.config.*',
   '**/webpack.config.*',
   '**/vite.config.*',
@@ -58,6 +59,32 @@ const DEFAULT_EXCLUSIONS = [
   '*.iml',
   '.editorconfig'
 ];
+
+/**
+ * Get framework-specific inclusions that override default exclusions
+ */
+function getFrameworkInclusions(projectRoot) {
+  const inclusions = [];
+  
+  // Check if this is a Next.js project with a Dockerfile
+  try {
+    const forgekitPath = path.join(projectRoot, 'forgekit.json');
+    if (fs.existsSync(forgekitPath)) {
+      const config = JSON.parse(fs.readFileSync(forgekitPath, 'utf-8'));
+      const isNextjs = config.stack?.frontend === 'nextjs';
+      const hasDockerfile = fs.existsSync(path.join(projectRoot, 'Dockerfile'));
+      
+      if (isNextjs && hasDockerfile) {
+        // Include Next.js config files that are normally excluded
+        inclusions.push('tsconfig.json', 'next.config.*', 'tailwind.config.*', 'postcss.config.*', 'next-env.d.ts');
+      }
+    }
+  } catch (error) {
+    // Ignore errors, just don't add inclusions
+  }
+  
+  return inclusions;
+}
 
 /**
  * Read and parse .dockerignore file
@@ -83,9 +110,21 @@ function readDockerignore(projectRoot) {
 /**
  * Check if a file should be excluded based on patterns
  */
-function shouldExclude(filePath, patterns) {
+function shouldExclude(filePath, patterns, inclusions = []) {
   // Normalize path for consistent matching
   const normalizedPath = filePath.replace(/\\/g, '/');
+  
+  // Check if this file is explicitly included (overrides exclusions)
+  const isIncluded = inclusions.some(inclusion => {
+    return minimatch(normalizedPath, inclusion, {
+      dot: true,
+      matchBase: true
+    });
+  });
+  
+  if (isIncluded) {
+    return false; // Don't exclude if explicitly included
+  }
   
   return patterns.some(pattern => {
     // Handle negation patterns (starting with !)
@@ -106,6 +145,7 @@ function shouldExclude(filePath, patterns) {
  */
 function getFilesToBundle(directories, projectRoot, verbose = false) {
   const dockerignorePatterns = readDockerignore(projectRoot);
+  const frameworkInclusions = getFrameworkInclusions(projectRoot);
   const allPatterns = [...DEFAULT_EXCLUSIONS, ...dockerignorePatterns];
   
   if (verbose) {
@@ -114,6 +154,9 @@ function getFilesToBundle(directories, projectRoot, verbose = false) {
       console.log(`   • From .dockerignore: ${dockerignorePatterns.length} patterns`);
     }
     console.log(`   • Default exclusions: ${DEFAULT_EXCLUSIONS.length} patterns`);
+    if (frameworkInclusions.length > 0) {
+      console.log(`   • Framework inclusions: ${frameworkInclusions.length} patterns`);
+    }
   }
   
   const filesToBundle = [];
@@ -133,7 +176,7 @@ function getFilesToBundle(directories, projectRoot, verbose = false) {
     if (stat.isFile()) {
       // Single file - check if it should be excluded
       const relativePath = path.relative(projectRoot, fullPath);
-      if (!shouldExclude(relativePath, allPatterns)) {
+      if (!shouldExclude(relativePath, allPatterns, frameworkInclusions)) {
         filesToBundle.push(dir);
         if (verbose) {
           console.log(`✅ Including file: ${dir}`);
@@ -144,7 +187,7 @@ function getFilesToBundle(directories, projectRoot, verbose = false) {
     } else if (stat.isDirectory()) {
       // Directory - check if the directory itself should be excluded
       const relativePath = path.relative(projectRoot, fullPath);
-      if (shouldExclude(relativePath, allPatterns)) {
+      if (shouldExclude(relativePath, allPatterns, frameworkInclusions)) {
         if (verbose) {
           console.log(`❌ Excluding directory: ${dir}`);
         }
@@ -167,6 +210,7 @@ function getFilesToBundle(directories, projectRoot, verbose = false) {
  */
 export function createFilteredBundle(tar, bundlePath, directories, projectRoot, verbose = false) {
   const filesToBundle = getFilesToBundle(directories, projectRoot, verbose);
+  const frameworkInclusions = getFrameworkInclusions(projectRoot);
   
   if (verbose) {
     console.log(`📦 Final bundle contents: ${filesToBundle.join(', ')}`);
@@ -182,7 +226,7 @@ export function createFilteredBundle(tar, bundlePath, directories, projectRoot, 
     filter: (path, stat) => {
       // Additional runtime filtering for individual files within included directories
       const relativePath = path.replace(/^\.\//, ''); // Remove leading ./
-      const shouldInclude = !shouldExclude(relativePath, [...DEFAULT_EXCLUSIONS, ...readDockerignore(projectRoot)]);
+      const shouldInclude = !shouldExclude(relativePath, [...DEFAULT_EXCLUSIONS, ...readDockerignore(projectRoot)], frameworkInclusions);
       
       if (!shouldInclude && verbose) {
         console.log(`  ❌ Filtering out: ${relativePath}`);
