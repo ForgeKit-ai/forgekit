@@ -26,7 +26,7 @@ export async function setupNextJS(config) {
     throw new Error(`Failed to create Next.js project '${projectName}': ${errMsg}`);
   }
 
-  console.log("\n📝 Adding DevForge structure files...");
+  console.log("\n📝 Adding ForgeKit structure files...");
   createProjectStructure(targetDir, projectName, stackLabel, ui, config.database, config.gitInit);
 
   // Configure Next.js for production deployment

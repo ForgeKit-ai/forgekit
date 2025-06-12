@@ -121,15 +121,17 @@ async function main() {
     console.log('Proceeding with existing directory...');
   }
 
-  // Always create standardized project structure for all project types
-  createProjectStructure(
-    projectRoot,
-    options.projectName,
-    { frontend: frontendOptions[options.frontend], backend: backendOptions[options.backend] },
-    options.ui,
-    options.database,
-    options.gitInit
-  );
+  // Create project structure for most stacks (Next.js handles this internally)
+  if (options.frontend !== 'nextjs') {
+    createProjectStructure(
+      projectRoot,
+      options.projectName,
+      { frontend: frontendOptions[options.frontend], backend: backendOptions[options.backend] },
+      options.ui,
+      options.database,
+      options.gitInit
+    );
+  }
 
   if (options.gitInit) {
     if (!fs.existsSync(projectRoot)) {

@@ -107,30 +107,104 @@ export function createProjectStructure(projectRoot, projectName, stack, uiFramew
 }
 
 export function generateReadme(projectRoot, projectName, stack, uiFramework, database) {
-  let readme = `# ${projectName}\n\n## Stack\n- **Frontend:** ${stack.frontend}\n${stack.backend ? `- **Backend:** ${stack.backend}\n` : ''}- **UI Library:** ${uiFramework}\n- **Database:** ${database || 'None'}\n`;
-
-  const instructions = [];
+  const isFullStack = stack.backend;
   const frontendDir = path.join(projectRoot, 'frontend');
   const backendDir = path.join(projectRoot, 'backend');
+  const hasFrontendDir = fs.existsSync(frontendDir);
+  const hasBackendDir = fs.existsSync(backendDir);
 
-  if (fs.existsSync(frontendDir)) {
+  let readme = `# ${projectName}\n\n## Stack\n- **Frontend:** ${stack.frontend}\n${stack.backend ? `- **Backend:** ${stack.backend}\n` : ''}- **UI Library:** ${uiFramework}\n- **Database:** ${database || 'None'}\n`;
+
+  // Getting Started section
+  const instructions = [];
+  if (hasFrontendDir) {
     instructions.push('```bash\ncd frontend && npm install && npm run dev\n```');
   }
-  if (fs.existsSync(backendDir)) {
+  if (hasBackendDir) {
     instructions.push('```bash\ncd backend && npm install && npm run dev\n```');
   }
 
   if (instructions.length > 0) {
-    readme += `\n## Getting Started\n${instructions.join('\n\n')}\n`;
+    readme += `\n## Getting Started\n\n${instructions.join('\n\n')}\n`;
   }
 
-  readme += `\n## Development\n`;
-  if (stack.backend) {
+  // Development section
+  readme += `\n## Development\n\n`;
+  if (isFullStack) {
     readme += `- Run \`npm run dev\` from the project root to start frontend and backend.\n`;
     readme += `- Or run \`npm run dev\` in the \`frontend\` and \`backend\` directories individually.\n`;
-  } else if (fs.existsSync(frontendDir)) {
+  } else if (hasFrontendDir) {
     readme += `Run \`npm run dev\` in the \`frontend\` directory to start the development server.\n`;
+  } else {
+    readme += `Run \`npm run dev\` to start the development server.\n`;
   }
+
+  // Build section
+  readme += `\n## Building for Production\n\nThis project includes build scripts optimized for deployment:\n\n\`\`\`bash\nnpm run build\n\`\`\`\n\nThe build process will:\n- Build frontend assets to the \`dist\` directory\n`;
+  
+  if (isFullStack) {
+    readme += `- Prepare backend for production deployment\n- Copy necessary files for containerized deployment\n`;
+  } else {
+    readme += `- Optimize assets for production deployment\n- Generate static files ready for hosting\n`;
+  }
+
+  readme += `\n### Build Output\n`;
+  if (isFullStack) {
+    readme += `- **Frontend builds to:** \`frontend/dist/\`\n- **Backend builds to:** \`backend-dist/\`\n`;
+  } else {
+    readme += `- **Builds to:** \`dist/\`\n`;
+  }
+
+  // Environment Variables section
+  readme += `\n## Environment Variables\n\nCopy the example environment file and configure your variables:\n\n\`\`\`bash\n`;
+  
+  if (stack.frontend === 'nextjs') {
+    readme += `cp .env.example .env.local  # For Next.js projects\n`;
+  } else {
+    readme += `cp .env.example .env        # Configure your environment\n`;
+  }
+  
+  readme += `\`\`\`\n\nRequired environment variables are documented in \`.env.example\`.\n`;
+
+  // Project Structure section
+  readme += `\n## Project Structure\n\nThis project was scaffolded with ForgeKit and includes:\n\n- \`forgekit.json\` - Project metadata and deployment configuration\n- \`Dockerfile\` - Container configuration (auto-generated during deployment)\n- \`.env.example\` - Environment variable template\n- Build scripts configured for containerized deployment\n`;
+
+  // Deployment Options section
+  readme += `\n## Deployment Options\n\n### Option 1: ForgeKit Hosting (Recommended)\n\nDeploy instantly to ForgeKit's hosting platform:\n\n\`\`\`bash\n# Install ForgeKit CLI if you haven't already\nnpm install -g @forgekit/cli\n\n# Deploy your project\nforge deploy\n\`\`\`\n\nForgeKit deployment features:\n- ✅ Automatic containerization with Docker\n- ✅ SSL certificates and custom domains\n- ✅ Environment variable management\n- ✅ Real-time logs and monitoring\n- ✅ Zero-config deployment from this project\n\nLearn more at [forgekit.ai](https://forgekit.ai)\n\n### Option 2: Manual Deployment\n\nThis project is containerization-ready and can be deployed to any platform that supports Docker:\n\n1. **Build the project:** \`npm run build\`\n2. **Create Dockerfile:** A Dockerfile will be generated automatically during ForgeKit deployment, or you can create one manually\n3. **Deploy to your platform** (Vercel, Netlify, Railway, etc.)\n`;
+
+  // Deployment Compatibility section
+  readme += `\n## Deployment Compatibility\n\nThis project is configured to work with containerized deployment platforms:\n\n- **Port Configuration:** Configured to use \`process.env.PORT || 3000\`\n- **Build Output:** Optimized build process with proper asset handling\n- **Environment Variables:** Follows 12-factor app principles\n`;
+  
+  if (isFullStack) {
+    readme += `- **Health Checks:** Includes endpoint for container health monitoring\n`;
+  }
+
+  // Framework-specific notes
+  readme += `\n### Framework-Specific Notes\n\n`;
+  
+  if (stack.frontend === 'nextjs') {
+    readme += `**Next.js:** Configured with \`output: 'standalone'\` for optimal containerization and reduced bundle size.\n\n`;
+  } else if (stack.frontend === 'react-vite' || stack.frontend === 'vue-vite') {
+    readme += `**Vite:** Configured with optimized build settings for static deployment.\n\n`;
+  } else if (stack.frontend === 'sveltekit') {
+    readme += `**SvelteKit:** Configured for static generation and optimal performance.\n\n`;
+  } else if (stack.frontend === 'astro') {
+    readme += `**Astro:** Optimized for static generation with partial hydration.\n\n`;
+  }
+
+  if (stack.backend === 'express') {
+    readme += `**Express:** Configured with production-ready middleware and proper error handling.\n\n`;
+  } else if (stack.backend === 'fastapi') {
+    readme += `**FastAPI:** Configured with CORS, automatic documentation, and production settings.\n\n`;
+  } else if (stack.backend === 'django') {
+    readme += `**Django:** Configured with production settings and static file handling.\n\n`;
+  }
+
+  // Troubleshooting section
+  readme += `## Troubleshooting\n\n### Build Issues\n- Ensure all dependencies are installed: \`npm install\`\n- Clear build cache: \`rm -rf dist .next node_modules && npm install\`\n- Check environment variables are properly configured\n\n### Deployment Issues\n- Verify build succeeds locally: \`npm run build\`\n- Check that required environment variables are set\n- Ensure port configuration allows dynamic port assignment\n- Review logs for specific error messages\n\n### ForgeKit Deployment Issues\n- Use \`forge logs <project-slug>\` to view deployment logs\n- Verify your project has a valid \`forgekit.json\` file\n- Check that build output directory matches configuration\n- Use \`forge --doctor\` to diagnose common issues\n`;
+
+  // Support section
+  readme += `\n## Support\n\n- **ForgeKit Documentation:** [docs.forgekit.ai](https://docs.forgekit.ai)\n- **Community Support:** [ForgeKit Discord](https://discord.gg/forgekit)\n- **Issue Tracker:** Report bugs specific to this template\n\n---\n\n*This project was created with [ForgeKit](https://forgekit.ai) - the fastest way to scaffold and deploy full-stack applications.*`;
 
   return readme;
 }
