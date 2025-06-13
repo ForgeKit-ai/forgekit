@@ -235,6 +235,15 @@ export const handler = async (argv = {}) => {
   const existingSlug = config.deployment?.slug;
   const isRedeploy = !!existingSlug;
   
+  // Debug logging for redeploy detection
+  if (verbose) {
+    console.log('🔍 Redeploy Detection:');
+    console.log(`   Config file exists: ${fs.existsSync(path.join(process.cwd(), 'forgekit.json'))}`);
+    console.log(`   Config content: ${JSON.stringify(config, null, 2)}`);
+    console.log(`   Existing slug: ${existingSlug || 'none'}`);
+    console.log(`   Is redeploy: ${isRedeploy}`);
+  }
+  
   // Set up deployment steps
   const steps = [
     { icon: '🔐', message: 'Authenticating', details: 'Verifying stored credentials and login status' },
@@ -302,9 +311,12 @@ export const handler = async (argv = {}) => {
     if (isRedeploy) {
       const baseUrl = process.env.FORGEKIT_DEPLOY_URL?.replace('/deploy_cli', '') || 'https://api.forgekit.ai';
       deployUrl = `${baseUrl}/redeploy/${existingSlug}`;
-      progress.logVerbose(`Redeploying to existing slug: ${existingSlug}`);
+      progress.logVerbose(`🔄 REDEPLOY MODE: Using redeploy endpoint for existing slug: ${existingSlug}`);
+      console.log(`🔄 Updating existing deployment: ${existingSlug}`);
     } else {
       deployUrl = process.env.FORGEKIT_DEPLOY_URL || 'https://api.forgekit.ai/deploy_cli';
+      progress.logVerbose(`🆕 NEW DEPLOY MODE: Using new deployment endpoint`);
+      console.log(`🆕 Creating new deployment`);
     }
     
     progress.logVerbose(`Build directory: ${buildDir}`);
@@ -647,23 +659,36 @@ export const handler = async (argv = {}) => {
       progress.complete();
 
       // Save deployment info to forgekit.json for future redeploys
-      if (slug || isRedeploy) {
-        try {
-          const configPath = path.join(process.cwd(), 'forgekit.json');
-          const currentConfig = readForgeConfig();
+      try {
+        const configPath = path.join(process.cwd(), 'forgekit.json');
+        const currentConfig = readForgeConfig();
+        const deploymentSlug = slug || existingSlug;
+        
+        if (deploymentSlug) {
           currentConfig.deployment = {
-            slug: slug || existingSlug,
+            slug: deploymentSlug,
             url: url,
             lastDeployed: new Date().toISOString()
           };
           if (buildId) {
             currentConfig.deployment.buildId = buildId;
           }
+          
           fs.writeFileSync(configPath, JSON.stringify(currentConfig, null, 2));
-          progress.logVerbose(isRedeploy ? 'Updated deployment info in forgekit.json' : 'Saved deployment info to forgekit.json');
-        } catch (saveError) {
-          progress.logWarning(`Could not save deployment info: ${saveError.message}`);
+          
+          const action = isRedeploy ? 'Updated' : 'Saved';
+          progress.logVerbose(`${action} deployment info in forgekit.json`);
+          console.log(`📝 ${action} deployment metadata: ${deploymentSlug}`);
+          
+          if (verbose) {
+            console.log(`   Deployment config: ${JSON.stringify(currentConfig.deployment, null, 2)}`);
+          }
+        } else {
+          progress.logWarning('No slug received from deployment, cannot save deployment info');
         }
+      } catch (saveError) {
+        progress.logWarning(`Could not save deployment info: ${saveError.message}`);
+        console.error(`⚠️ Warning: Could not save deployment metadata - ${saveError.message}`);
       }
 
       // Success output
